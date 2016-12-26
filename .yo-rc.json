@@ -1,0 +1,10 @@
+{
+  "generator-python-lib": {
+    "projectName": "PerkUp",
+    "fullName": "Andres Rojas",
+    "email": "erojas@perkup.trch",
+    "gitlabName": "andreserojasi",
+    "ciProvider": "Travis CI",
+    "version": "3.0.0"
+  }
+}
