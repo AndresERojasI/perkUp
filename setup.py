@@ -50,6 +50,9 @@ setup(
         'coverage': Coverage,
     },
     install_requires=[
+        'eve',
+        'tornado',
+        'SQLAlchemy'
     ],
     license='Apache License (2.0)',
     name='PerkUp',

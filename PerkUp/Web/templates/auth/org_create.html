@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <!-- Meta, title, CSS, favicons, etc. -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>PerkUp - Dashboard | Login</title>
+
+    <!-- Bootstrap -->
+    <link href="{{ static_url('lib/bootstrap/dist/css/bootstrap.min.css') }}" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="{{ static_url('lib/font-awesome/css/font-awesome.min.css') }}" rel="stylesheet">
+    <!-- NProgress -->
+    <link href="{{ static_url('lib/nprogress/nprogress.css') }}" rel="stylesheet">
+    <!-- Animate.css -->
+    <link href="{{ static_url('lib/animate.css/animate.min.css') }}" rel="stylesheet">
+
+    <link href="{{ static_url('lib/bootstrap-fileinput/css/fileinput.min.css') }}" rel="stylesheet">
+
+    <!-- Custom Theme Style -->
+    <link href="{{ static_url('custom/css/custom.css') }}" rel="stylesheet">
+
+    <script src="{{ static_url('lib/jquery/dist/jquery.min.js') }}"></script>
+    <script src="{{ static_url('lib/bootstrap/dist/js/bootstrap.min.js') }}"></script>
+    <script src="{{ static_url('lib/bootstrap-fileinput/js/fileinput.min.js') }}"></script>
+    <script src="{{ static_url('lib/parsleyjs/dist/parsley.min.js') }}"></script>
+</head>
+
+<body class="login org_create">
+
+<div id="org_creation_form" class="col-lg-7 col-md-7 col-sm-7 text-center">
+
+    <a href="/" class="site_title login"><i class="fa fa-diamond"></i> <span>Perk<strong
+            style="color:#00c4d6;">UP</strong></span></a>
+    <form enctype="multipart/form-data" id="form" method="post" class="col-lg-10 col-md-10 col-sm-12 col-xs-12 col-md-offset-1 col-lg-offset-1"
+          data-parsley-validate>
+        <h1>Create Organization</h1>
+        {% if errors != False %}
+        <div class="alert alert-danger">
+          <strong>Error!</strong> {{ errors }}
+        </div>
+        {% end %}
+        <div>
+            <input name="org_name" data-parsley-trigger="focusout" data-parsley-maxlength="50" type="text" class="form-control" placeholder="Organization Name" data-parsley-required="true"/>
+        </div>
+        <div class="clearfix"></div>
+        <br>
+        <div class="input-group">
+            <input name="org_subdomain" data-parsley-pattern="[\da-zA-Z]+" data-parsley-length="[3, 50]" type="text" class="form-control" placeholder="Unique Sub-Domain"
+                   data-parsley-required="true"
+                   data-parsley-remote="/organization/validate_subdomain"
+                   data-parsley-trigger="focusout"
+                   data-parsley-remote-method="POST"
+                   data-parsley-trim-value="true"
+                   data-parsley-remote-options='{ "type": "POST", "dataType": "json", "data": { "_xsrf": getCookie("_xsrf") } }'
+            />
+            <div class="input-group-addon">.perkup.tech</div>
+        </div>
+        <div class="clearfix"></div>
+        <br>
+        <p class="text-left">If your company or you have a logo, please upload it here:
+            <br>
+            <small>maximum files size is 1 MB (1000 KB)</small>
+        </p>
+        <div>
+            <input name="org_logo" id="input-6" type="file" class="file-loading" placeholder="Organization Logo">
+        </div>
+        <div class="clearfix"></div>
+
+        <p class="text-left">
+            Where in the world are you?<br>
+            <small>just out of curiosity and for cool features in the future</small>
+        </p>
+        <input name="org_address" id="pac-input" class="controls" type="text" placeholder="Search Box">
+        <div id="map" class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+            <div class="clearfix"></div>
+        </div>
+        <input type="hidden" name="lat_lang" id="lat_lang">
+
+        {% module xsrf_form_html() %}
+
+        <button type="submit" class="btn btn-primary btn-lg btn-block">Create Organization</button>
+        <div class="clearfix"></div>
+
+        <div class="separator">
+            <p class="change_link">Already a member ?
+                <a href="/login" class="to_register"> Log in </a>
+            </p>
+
+            <div class="clearfix"></div>
+            <br/>
+        </div>
+    </form>
+    <div class="clearfix"></div>
+</div>
+
+<div id="photo_sidebar_org" class="col-lg-5 col-md-5 col-sm-5 text-center hidden-xs">
+
+</div>
+<div class="clearfix"></div>
+<script type="text/javascript">
+    function getCookie(name) {
+        var r = document.cookie.match("\\b" + name + "=([^;]*)\\b");
+        return r ? r[1] : undefined;
+    }
+    $('#form').parsley();
+    $(document).on("keypress", ":not(.pac-input)", function(event) {
+        return event.keyCode != 13;
+    });
+</script>
+<script>
+    $(document).on('ready', function () {
+        $("#input-6").fileinput({
+            showUpload: false,
+            maxFileCount: 1,
+            mainClass: "input-group-lg",
+            showPreview: false,
+            maxFileSize: 1000
+        });
+    });
+</script>
+
+
+<script>
+    // This example adds a search box to a map, using the Google Place Autocomplete
+    // feature. People can enter geographical searches. The search box will return a
+    // pick list containing a mix of places and predicted search terms.
+
+    // This example requires the Places library. Include the libraries=places
+    // parameter when you first load the API. For example:
+    // <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places">
+
+    function initAutocomplete() {
+        var map = new google.maps.Map(document.getElementById('map'), {
+            center: {lat: 40.714680, lng: -73.995893},
+            zoom: 13,
+            mapTypeId: 'roadmap'
+        });
+
+        // Create the search box and link it to the UI element.
+        var input = document.getElementById('pac-input');
+        var searchBox = new google.maps.places.SearchBox(input);
+        map.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
+
+        // Bias the SearchBox results towards current map's viewport.
+        map.addListener('bounds_changed', function () {
+            searchBox.setBounds(map.getBounds());
+        });
+
+        var markers = [];
+        // Listen for the event fired when the user selects a prediction and retrieve
+        // more details for that place.
+        searchBox.addListener('places_changed', function () {
+            var places = searchBox.getPlaces();
+
+            if (places.length == 0) {
+                return;
+            }
+
+            // Clear out the old markers.
+            markers.forEach(function (marker) {
+                marker.setMap(null);
+            });
+            markers = [];
+
+            // For each place, get the icon, name and location.
+            var bounds = new google.maps.LatLngBounds();
+            places.forEach(function (place) {
+                if (!place.geometry) {
+                    console.log("Returned place contains no geometry");
+                    return;
+                }
+                var icon = {
+                    url: place.icon,
+                    size: new google.maps.Size(71, 71),
+                    origin: new google.maps.Point(0, 0),
+                    anchor: new google.maps.Point(17, 34),
+                    scaledSize: new google.maps.Size(25, 25)
+                };
+
+                // Create a marker for each place.
+                markers.push(new google.maps.Marker({
+                    map: map,
+                    icon: icon,
+                    title: place.name,
+                    position: place.geometry.location
+                }));
+
+
+                if (place.geometry.viewport) {
+                    // Only geocodes have viewport.
+                    bounds.union(place.geometry.viewport);
+                } else {
+                    bounds.extend(place.geometry.location);
+                }
+
+                $('#lat_lang').val(place.geometry.location.lat() + "|" + place.geometry.location.lng());
+
+            });
+            map.fitBounds(bounds);
+        });
+    }
+
+</script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAk8aomF9PrxpwMJLJCwXl3bHS1XtEDOOY&libraries=places&callback=initAutocomplete"
+        async defer></script>
+
+</body>
+</html>

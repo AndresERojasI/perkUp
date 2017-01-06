@@ -1,1 +1,4 @@
 -e .
+Eve>=0.7.dev0
+Tornado>=4.4.2
+SQLAlchemy>=1.1

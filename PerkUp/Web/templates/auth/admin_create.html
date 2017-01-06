@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <!-- Meta, title, CSS, favicons, etc. -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>PerkUp - Dashboard | Login</title>
+
+    <!-- Bootstrap -->
+    <link href="{{ static_url('lib/bootstrap/dist/css/bootstrap.min.css') }}" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="{{ static_url('lib/font-awesome/css/font-awesome.min.css') }}" rel="stylesheet">
+    <!-- NProgress -->
+    <link href="{{ static_url('lib/nprogress/nprogress.css') }}" rel="stylesheet">
+    <!-- Animate.css -->
+    <link href="{{ static_url('lib/animate.css/animate.min.css') }}" rel="stylesheet">
+
+    <link href="{{ static_url('lib/bootstrap-fileinput/css/fileinput.min.css') }}" rel="stylesheet">
+
+    <!-- Custom Theme Style -->
+    <link href="{{ static_url('custom/css/custom.css') }}" rel="stylesheet">
+
+    <script src="{{ static_url('lib/jquery/dist/jquery.min.js') }}"></script>
+    <script src="{{ static_url('lib/bootstrap/dist/js/bootstrap.min.js') }}"></script>
+    <script src="{{ static_url('lib/bootstrap-fileinput/js/fileinput.min.js') }}"></script>
+    <script src="{{ static_url('lib/parsleyjs/dist/parsley.min.js') }}"></script>
+</head>
+
+<body class="login org_create">
+
+<div id="org_creation_form" class="col-lg-7 col-md-7 col-sm-7 text-center">
+
+    <a href="/" class="site_title login"><i class="fa fa-diamond"></i> <span>Perk<strong
+            style="color:#00c4d6;">UP</strong></span></a>
+    <form enctype="multipart/form-data" id="form" method="post"
+          class="col-lg-10 col-md-10 col-sm-12 col-xs-12 col-md-offset-1 col-lg-offset-1"
+          data-parsley-validate>
+        <h1>Create Administrator</h1>
+        {% if errors != False %}
+        <div class="alert alert-danger">
+            <strong>Error!</strong> {{ errors }}
+        </div>
+        {% end %}
+        <h2>Personal Information</h2>
+        <div class="form-group">
+            <input name="admin_name" data-parsley-trigger="focusout" data-parsley-maxlength="50" type="text"
+                   class="form-control col-lg-6 col-md-6 col-sm-6 col-xs-12" placeholder="Administrator Name(s)"
+                   data-parsley-required="true"/>
+            <input name="admin_last_name" data-parsley-trigger="focusout" data-parsley-maxlength="50" type="text"
+                   class="form-control col-lg-6 col-md-6 col-sm-6 col-xs-12" placeholder="Administrator Last Name(s)"
+                   data-parsley-required="true"/>
+        </div>
+        <div class="clearfix"></div>
+        <br>
+        <div class="form-group">
+            <input name="admin_email" id="admin_email" data-parsley-trigger="focusout" data-parsley-maxlength="50" type="email"
+                   class="form-control col-lg-6 col-md-6 col-sm-6 col-xs-12" placeholder="Administrator email"
+                   data-parsley-required="true" data-parsley-type="email"/>
+            <input name="admin_email_confirm" data-parsley-trigger="focusout" data-parsley-maxlength="50" type="email"
+                   class="form-control col-lg-6 col-md-6 col-sm-6 col-xs-12" placeholder="Confirm email"
+                   data-parsley-required="true" data-parsley-type="email" data-parsley-equalto="#admin_email"/>
+        </div>
+        <div class="clearfix"></div>
+        <br>
+        <p class="text-left">Please upload a picture of you, we would love to meet you:</p>
+        <div>
+            <input name="admin_avatar" id="input-6" type="file" class="file-loading" placeholder="Organization Logo">
+        </div>
+        <div class="clearfix"></div>
+        <br>
+        <h2>Login Information</h2>
+        <div class="form-group">
+            <input name="admin_user" data-parsley-trigger="focusout" data-parsley-maxlength="50" type="text"
+                   class="form-control col-lg-6 col-md-6 col-sm-6 col-xs-12" placeholder="Username"
+                   data-parsley-required="true"/>
+            <input name="admin_password" data-parsley-trigger="focusout" data-parsley-maxlength="50" type="password"
+                   class="form-control col-lg-6 col-md-6 col-sm-6 col-xs-12" placeholder="Password"
+                   data-parsley-required="true"/>
+        </div>
+
+        <div class="clearfix"></div>
+
+        {% module xsrf_form_html() %}
+
+        <button type="submit" class="btn btn-primary btn-lg btn-block">Create Organization</button>
+        <div class="clearfix"></div>
+
+        <div class="separator">
+            <p class="change_link">Already a member ?
+                <a href="/login" class="to_register"> Log in </a>
+            </p>
+
+            <div class="clearfix"></div>
+            <br/>
+        </div>
+    </form>
+    <div class="clearfix"></div>
+</div>
+
+<div id="photo_sidebar_admin" class="col-lg-5 col-md-5 col-sm-5 text-center hidden-xs">
+
+</div>
+<div class="clearfix"></div>
+<script type="text/javascript">
+    function getCookie(name) {
+        var r = document.cookie.match("\\b" + name + "=([^;]*)\\b");
+        return r ? r[1] : undefined;
+    }
+    $('#form').parsley();
+    $(document).on("keypress", ":not(.pac-input)", function (event) {
+        return event.keyCode != 13;
+    });
+</script>
+<script>
+    $(document).on('ready', function () {
+        $("#input-6").fileinput({
+            showUpload: false,
+            maxFileCount: 1,
+            mainClass: "input-group-lg",
+            showPreview: false
+
+        });
+    });
+</script>
+
+</body>
+</html>
