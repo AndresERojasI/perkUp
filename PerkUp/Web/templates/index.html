@@ -1,7 +1,93 @@
 {% extends "base.html" %}
 
-{% block title %}Oz Bootstrap{% end %}
+{% block title %}Home{% end %}
+
+{% block extra_css %}
+<link href="{{ static_url('lib/malihu-custom-scrollbar-plugin/jquery.mCustomScrollbar.min.css') }}" rel="stylesheet">
+{% end %}
+
+{% block extra_js %}
+<script src="{{ static_url('lib/malihu-custom-scrollbar-plugin/jquery.mCustomScrollbar.js') }}"></script>
+
+<script>
+    (function($){
+        $(window).on("load",function(){
+            $(".scrollbar").mCustomScrollbar({
+                axis:"y"
+            });
+        });
+    })(jQuery);
+</script>
+{% end %}
 
 {% block body %}
+<div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
+    <div class="x_panel tile">
+        <div class="x_title">
+          <h2>Datasources</h2>
+          <ul class="nav navbar-right panel_toolbox">
+            <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
+            </li>
+          </ul>
+          <div class="clearfix"></div>
+        </div>
+        <div class="x_content scrollbar" data-mcs-theme="dark">
+            <ul class="list-unstyled scroll-view">
+              <li class="media event">
+                <a class="pull-left border-green profile_thumb">
+                  <i class="fa fa-database green"></i>
+                </a>
+                <div class="media-body">
+                  <a class="title" href="#">Ms. Mary Jane</a>
+                  <p><strong>$2300. </strong> Agent Avarage Sales </p>
+                  <p> <small>12 Sales Today</small>
+                  </p>
+                </div>
+              </li>
+              <li class="media event">
+                <a class="pull-left border-blue profile_thumb">
+                  <i class="fa fa-database blue"></i>
+                </a>
+                <div class="media-body">
+                  <a class="title" href="#">Ms. Mary Jane</a>
+                  <p><strong>$2300. </strong> Agent Avarage Sales </p>
+                  <p> <small>12 Sales Today</small>
+                  </p>
+                </div>
+              </li>
+            </ul>
+        </div>
+    </div>
+    <div class="x_panel tile">
+        <div class="x_title">
+          <h2>API Clients</h2>
+          <ul class="nav navbar-right panel_toolbox">
+            <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
+            </li>
+          </ul>
+          <div class="clearfix"></div>
+        </div>
+        <div class="x_content scrollbar" data-mcs-theme="dark">
 
+        </div>
+    </div>
+</div>
+
+<div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
+    <div class="x_panel">
+        <div class="x_title">
+          <h2>API Endpoints <small>From all Datasources</small></h2>
+          <ul class="nav navbar-right panel_toolbox">
+            <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
+            </li>
+          </ul>
+          <div class="clearfix"></div>
+        </div>
+        <div class="x_content scrollbar" data-mcs-theme="dark">
+
+
+        </div>
+      </div>
+</div>
+<div class="clearfix"></div>
 {% end %}

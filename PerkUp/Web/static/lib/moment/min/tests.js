@@ -67876,4 +67876,5057 @@ function defineCommonLocaleTests(locale, options) {
     test('lenient ordinal parsing', function (assert) {
         var i, ordinalStr, testMoment;
         for (i = 1; i <= 31; ++i) {
-            ordinalStr = moment([2014, 0, i]).
+            ordinalStr = moment([2014, 0, i]).format('YYYY MM Do');
+            testMoment = moment(ordinalStr, 'YYYY MM Do');
+            assert.equal(testMoment.year(), 2014,
+                    'lenient ordinal parsing ' + i + ' year check');
+            assert.equal(testMoment.month(), 0,
+                    'lenient ordinal parsing ' + i + ' month check');
+            assert.equal(testMoment.date(), i,
+                    'lenient ordinal parsing ' + i + ' date check');
+        }
+    });
+
+    test('lenient ordinal parsing of number', function (assert) {
+        var i, testMoment;
+        for (i = 1; i <= 31; ++i) {
+            testMoment = moment('2014 01 ' + i, 'YYYY MM Do');
+            assert.equal(testMoment.year(), 2014,
+                    'lenient ordinal parsing of number ' + i + ' year check');
+            assert.equal(testMoment.month(), 0,
+                    'lenient ordinal parsing of number ' + i + ' month check');
+            assert.equal(testMoment.date(), i,
+                    'lenient ordinal parsing of number ' + i + ' date check');
+        }
+    });
+
+    test('strict ordinal parsing', function (assert) {
+        var i, ordinalStr, testMoment;
+        for (i = 1; i <= 31; ++i) {
+            ordinalStr = moment([2014, 0, i]).format('YYYY MM Do');
+            testMoment = moment(ordinalStr, 'YYYY MM Do', true);
+            assert.ok(testMoment.isValid(), 'strict ordinal parsing ' + i);
+        }
+    });
+
+    test('meridiem invariant', function (assert) {
+        var h, m, t1, t2;
+        for (h = 0; h < 24; ++h) {
+            for (m = 0; m < 60; m += 15) {
+                t1 = moment.utc([2000, 0, 1, h, m]);
+                t2 = moment.utc(t1.format('A h:mm'), 'A h:mm');
+                assert.equal(t2.format('HH:mm'), t1.format('HH:mm'),
+                        'meridiem at ' + t1.format('HH:mm'));
+            }
+        }
+    });
+
+    test('date format correctness', function (assert) {
+        var data, tokens;
+        data = moment.localeData()._longDateFormat;
+        tokens = objectKeys(data);
+        each(tokens, function (srchToken) {
+            // Check each format string to make sure it does not contain any
+            // tokens that need to be expanded.
+            each(tokens, function (baseToken) {
+                // strip escaped sequences
+                var format = data[baseToken].replace(/(\[[^\]]*\])/g, '');
+                assert.equal(false, !!~format.indexOf(srchToken),
+                        'contains ' + srchToken + ' in ' + baseToken);
+            });
+        });
+    });
+
+    test('month parsing correctness', function (assert) {
+        var i, m;
+
+        if (locale === 'tr') {
+            // I can't fix it :(
+            expect(0);
+            return;
+        }
+        function tester(format) {
+            var r;
+            r = moment(m.format(format), format);
+            assert.equal(r.month(), m.month(), 'month ' + i + ' fmt ' + format);
+            r = moment(m.format(format).toLocaleUpperCase(), format);
+            assert.equal(r.month(), m.month(), 'month ' + i + ' fmt ' + format + ' upper');
+            r = moment(m.format(format).toLocaleLowerCase(), format);
+            assert.equal(r.month(), m.month(), 'month ' + i + ' fmt ' + format + ' lower');
+
+            r = moment(m.format(format), format, true);
+            assert.equal(r.month(), m.month(), 'month ' + i + ' fmt ' + format + ' strict');
+            r = moment(m.format(format).toLocaleUpperCase(), format, true);
+            assert.equal(r.month(), m.month(), 'month ' + i + ' fmt ' + format + ' upper strict');
+            r = moment(m.format(format).toLocaleLowerCase(), format, true);
+            assert.equal(r.month(), m.month(), 'month ' + i + ' fmt ' + format + ' lower strict');
+        }
+
+        for (i = 0; i < 12; ++i) {
+            m = moment([2015, i, 15, 18]);
+            tester('MMM');
+            tester('MMM.');
+            tester('MMMM');
+            tester('MMMM.');
+        }
+    });
+
+    test('weekday parsing correctness', function (assert) {
+        var i, m;
+
+        if (locale === 'tr' || locale === 'az' || locale === 'ro') {
+            // tr, az: There is a lower-case letter (ı), that converted to
+            // upper then lower changes to i
+            // ro: there is the letter ț which behaves weird under IE8
+            expect(0);
+            return;
+        }
+        function tester(format) {
+            var r, baseMsg = 'weekday ' + m.weekday() + ' fmt ' + format + ' ' + m.toISOString();
+            r = moment(m.format(format), format);
+            assert.equal(r.weekday(), m.weekday(), baseMsg);
+            r = moment(m.format(format).toLocaleUpperCase(), format);
+            assert.equal(r.weekday(), m.weekday(), baseMsg + ' upper');
+            r = moment(m.format(format).toLocaleLowerCase(), format);
+            assert.equal(r.weekday(), m.weekday(), baseMsg + ' lower');
+
+            r = moment(m.format(format), format, true);
+            assert.equal(r.weekday(), m.weekday(), baseMsg + ' strict');
+            r = moment(m.format(format).toLocaleUpperCase(), format, true);
+            assert.equal(r.weekday(), m.weekday(), baseMsg + ' upper strict');
+            r = moment(m.format(format).toLocaleLowerCase(), format, true);
+            assert.equal(r.weekday(), m.weekday(), baseMsg + ' lower strict');
+        }
+
+        for (i = 0; i < 7; ++i) {
+            m = moment.utc([2015, 0, i + 1, 18]);
+            tester('dd');
+            tester('ddd');
+            tester('dddd');
+        }
+    });
+}
+
+function setupDeprecationHandler(test, moment$$1, scope) {
+    test._expectedDeprecations = null;
+    test._observedDeprecations = null;
+    test._oldSupress = moment$$1.suppressDeprecationWarnings;
+    moment$$1.suppressDeprecationWarnings = true;
+    test.expectedDeprecations = function () {
+        test._expectedDeprecations = arguments;
+        test._observedDeprecations = [];
+    };
+    moment$$1.deprecationHandler = function (name, msg) {
+        var deprecationId = matchedDeprecation(name, msg, test._expectedDeprecations);
+        if (deprecationId === -1) {
+            throw new Error('Unexpected deprecation thrown name=' +
+                    name + ' msg=' + msg);
+        }
+        test._observedDeprecations[deprecationId] = 1;
+    };
+}
+
+function teardownDeprecationHandler(test, moment$$1, scope) {
+    moment$$1.suppressDeprecationWarnings = test._oldSupress;
+
+    if (test._expectedDeprecations != null) {
+        var missedDeprecations = [];
+        each(test._expectedDeprecations, function (deprecationPattern, id) {
+            if (test._observedDeprecations[id] !== 1) {
+                missedDeprecations.push(deprecationPattern);
+            }
+        });
+        if (missedDeprecations.length !== 0) {
+            throw new Error('Expected deprecation warnings did not happen: ' +
+                    missedDeprecations.join(' '));
+        }
+    }
+}
+
+function matchedDeprecation(name, msg, deprecations) {
+    if (deprecations == null) {
+        return -1;
+    }
+    for (var i = 0; i < deprecations.length; ++i) {
+        if (name != null && name === deprecations[i]) {
+            return i;
+        }
+        if (msg != null && msg.substring(0, deprecations[i].length) === deprecations[i]) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+/*global QUnit:false*/
+
+var test = QUnit.test;
+
+var expect = QUnit.expect;
+
+function module$1 (name, lifecycle) {
+    QUnit.module(name, {
+        setup : function () {
+            moment.locale('en');
+            moment.createFromInputFallback = function (config) {
+                throw new Error('input not handled by moment: ' + config._i);
+            };
+            setupDeprecationHandler(test, moment, 'core');
+            if (lifecycle && lifecycle.setup) {
+                lifecycle.setup();
+            }
+        },
+        teardown : function () {
+            teardownDeprecationHandler(test, moment, 'core');
+            if (lifecycle && lifecycle.teardown) {
+                lifecycle.teardown();
+            }
+        }
+    });
+}
+
+module$1('start and end of units');
+
+test('start of year', function (assert) {
+    var m = moment(new Date(2011, 1, 2, 3, 4, 5, 6)).startOf('year'),
+        ms = moment(new Date(2011, 1, 2, 3, 4, 5, 6)).startOf('years'),
+        ma = moment(new Date(2011, 1, 2, 3, 4, 5, 6)).startOf('y');
+    assert.equal(+m, +ms, 'Plural or singular should work');
+    assert.equal(+m, +ma, 'Full or abbreviated should work');
+    assert.equal(m.year(), 2011, 'keep the year');
+    assert.equal(m.month(), 0, 'strip out the month');
+    assert.equal(m.date(), 1, 'strip out the day');
+    assert.equal(m.hours(), 0, 'strip out the hours');
+    assert.equal(m.minutes(), 0, 'strip out the minutes');
+    assert.equal(m.seconds(), 0, 'strip out the seconds');
+    assert.equal(m.milliseconds(), 0, 'strip out the milliseconds');
+});
+
+test('end of year', function (assert) {
+    var m = moment(new Date(2011, 1, 2, 3, 4, 5, 6)).endOf('year'),
+        ms = moment(new Date(2011, 1, 2, 3, 4, 5, 6)).endOf('years'),
+        ma = moment(new Date(2011, 1, 2, 3, 4, 5, 6)).endOf('y');
+    assert.equal(+m, +ms, 'Plural or singular should work');
+    assert.equal(+m, +ma, 'Full or abbreviated should work');
+    assert.equal(m.year(), 2011, 'keep the year');
+    assert.equal(m.month(), 11, 'set the month');
+    assert.equal(m.date(), 31, 'set the day');
+    assert.equal(m.hours(), 23, 'set the hours');
+    assert.equal(m.minutes(), 59, 'set the minutes');
+    assert.equal(m.seconds(), 59, 'set the seconds');
+    assert.equal(m.milliseconds(), 999, 'set the seconds');
+});
+
+test('start of quarter', function (assert) {
+    var m = moment(new Date(2011, 4, 2, 3, 4, 5, 6)).startOf('quarter'),
+        ms = moment(new Date(2011, 4, 2, 3, 4, 5, 6)).startOf('quarters'),
+        ma = moment(new Date(2011, 4, 2, 3, 4, 5, 6)).startOf('Q');
+    assert.equal(+m, +ms, 'Plural or singular should work');
+    assert.equal(+m, +ma, 'Full or abbreviated should work');
+    assert.equal(m.year(), 2011, 'keep the year');
+    assert.equal(m.quarter(), 2, 'keep the quarter');
+    assert.equal(m.month(), 3, 'strip out the month');
+    assert.equal(m.date(), 1, 'strip out the day');
+    assert.equal(m.hours(), 0, 'strip out the hours');
+    assert.equal(m.minutes(), 0, 'strip out the minutes');
+    assert.equal(m.seconds(), 0, 'strip out the seconds');
+    assert.equal(m.milliseconds(), 0, 'strip out the milliseconds');
+});
+
+test('end of quarter', function (assert) {
+    var m = moment(new Date(2011, 4, 2, 3, 4, 5, 6)).endOf('quarter'),
+        ms = moment(new Date(2011, 4, 2, 3, 4, 5, 6)).endOf('quarters'),
+        ma = moment(new Date(2011, 4, 2, 3, 4, 5, 6)).endOf('Q');
+    assert.equal(+m, +ms, 'Plural or singular should work');
+    assert.equal(+m, +ma, 'Full or abbreviated should work');
+    assert.equal(m.year(), 2011, 'keep the year');
+    assert.equal(m.quarter(), 2, 'keep the quarter');
+    assert.equal(m.month(), 5, 'set the month');
+    assert.equal(m.date(), 30, 'set the day');
+    assert.equal(m.hours(), 23, 'set the hours');
+    assert.equal(m.minutes(), 59, 'set the minutes');
+    assert.equal(m.seconds(), 59, 'set the seconds');
+    assert.equal(m.milliseconds(), 999, 'set the seconds');
+});
+
+test('start of month', function (assert) {
+    var m = moment(new Date(2011, 1, 2, 3, 4, 5, 6)).startOf('month'),
+        ms = moment(new Date(2011, 1, 2, 3, 4, 5, 6)).startOf('months'),
+        ma = moment(new Date(2011, 1, 2, 3, 4, 5, 6)).startOf('M');
+    assert.equal(+m, +ms, 'Plural or singular should work');
+    assert.equal(+m, +ma, 'Full or abbreviated should work');
+    assert.equal(m.year(), 2011, 'keep the year');
+    assert.equal(m.month(), 1, 'keep the month');
+    assert.equal(m.date(), 1, 'strip out the day');
+    assert.equal(m.hours(), 0, 'strip out the hours');
+    assert.equal(m.minutes(), 0, 'strip out the minutes');
+    assert.equal(m.seconds(), 0, 'strip out the seconds');
+    assert.equal(m.milliseconds(), 0, 'strip out the milliseconds');
+});
+
+test('end of month', function (assert) {
+    var m = moment(new Date(2011, 1, 2, 3, 4, 5, 6)).endOf('month'),
+        ms = moment(new Date(2011, 1, 2, 3, 4, 5, 6)).endOf('months'),
+        ma = moment(new Date(2011, 1, 2, 3, 4, 5, 6)).endOf('M');
+    assert.equal(+m, +ms, 'Plural or singular should work');
+    assert.equal(+m, +ma, 'Full or abbreviated should work');
+    assert.equal(m.year(), 2011, 'keep the year');
+    assert.equal(m.month(), 1, 'keep the month');
+    assert.equal(m.date(), 28, 'set the day');
+    assert.equal(m.hours(), 23, 'set the hours');
+    assert.equal(m.minutes(), 59, 'set the minutes');
+    assert.equal(m.seconds(), 59, 'set the seconds');
+    assert.equal(m.milliseconds(), 999, 'set the seconds');
+});
+
+test('start of week', function (assert) {
+    var m = moment(new Date(2011, 1, 2, 3, 4, 5, 6)).startOf('week'),
+        ms = moment(new Date(2011, 1, 2, 3, 4, 5, 6)).startOf('weeks'),
+        ma = moment(new Date(2011, 1, 2, 3, 4, 5, 6)).startOf('w');
+    assert.equal(+m, +ms, 'Plural or singular should work');
+    assert.equal(+m, +ma, 'Full or abbreviated should work');
+    assert.equal(m.year(), 2011, 'keep the year');
+    assert.equal(m.month(), 0, 'rolls back to January');
+    assert.equal(m.day(), 0, 'set day of week');
+    assert.equal(m.date(), 30, 'set correct date');
+    assert.equal(m.hours(), 0, 'strip out the hours');
+    assert.equal(m.minutes(), 0, 'strip out the minutes');
+    assert.equal(m.seconds(), 0, 'strip out the seconds');
+    assert.equal(m.milliseconds(), 0, 'strip out the milliseconds');
+});
+
+test('end of week', function (assert) {
+    var m = moment(new Date(2011, 1, 2, 3, 4, 5, 6)).endOf('week'),
+        ms = moment(new Date(2011, 1, 2, 3, 4, 5, 6)).endOf('weeks'),
+        ma = moment(new Date(2011, 1, 2, 3, 4, 5, 6)).endOf('weeks');
+    assert.equal(+m, +ms, 'Plural or singular should work');
+    assert.equal(+m, +ma, 'Full or abbreviated should work');
+    assert.equal(m.year(), 2011, 'keep the year');
+    assert.equal(m.month(), 1, 'keep the month');
+    assert.equal(m.day(), 6, 'set the day of the week');
+    assert.equal(m.date(), 5, 'set the day');
+    assert.equal(m.hours(), 23, 'set the hours');
+    assert.equal(m.minutes(), 59, 'set the minutes');
+    assert.equal(m.seconds(), 59, 'set the seconds');
+    assert.equal(m.milliseconds(), 999, 'set the seconds');
+});
+
+test('start of iso-week', function (assert) {
+    var m = moment(new Date(2011, 1, 2, 3, 4, 5, 6)).startOf('isoWeek'),
+        ms = moment(new Date(2011, 1, 2, 3, 4, 5, 6)).startOf('isoWeeks'),
+        ma = moment(new Date(2011, 1, 2, 3, 4, 5, 6)).startOf('W');
+    assert.equal(+m, +ms, 'Plural or singular should work');
+    assert.equal(+m, +ma, 'Full or abbreviated should work');
+    assert.equal(m.year(), 2011, 'keep the year');
+    assert.equal(m.month(), 0, 'rollback to January');
+    assert.equal(m.isoWeekday(), 1, 'set day of iso-week');
+    assert.equal(m.date(), 31, 'set correct date');
+    assert.equal(m.hours(), 0, 'strip out the hours');
+    assert.equal(m.minutes(), 0, 'strip out the minutes');
+    assert.equal(m.seconds(), 0, 'strip out the seconds');
+    assert.equal(m.milliseconds(), 0, 'strip out the milliseconds');
+});
+
+test('end of iso-week', function (assert) {
+    var m = moment(new Date(2011, 1, 2, 3, 4, 5, 6)).endOf('isoWeek'),
+        ms = moment(new Date(2011, 1, 2, 3, 4, 5, 6)).endOf('isoWeeks'),
+        ma = moment(new Date(2011, 1, 2, 3, 4, 5, 6)).endOf('W');
+    assert.equal(+m, +ms, 'Plural or singular should work');
+    assert.equal(+m, +ma, 'Full or abbreviated should work');
+    assert.equal(m.year(), 2011, 'keep the year');
+    assert.equal(m.month(), 1, 'keep the month');
+    assert.equal(m.isoWeekday(), 7, 'set the day of the week');
+    assert.equal(m.date(), 6, 'set the day');
+    assert.equal(m.hours(), 23, 'set the hours');
+    assert.equal(m.minutes(), 59, 'set the minutes');
+    assert.equal(m.seconds(), 59, 'set the seconds');
+    assert.equal(m.milliseconds(), 999, 'set the seconds');
+});
+
+test('start of day', function (assert) {
+    var m = moment(new Date(2011, 1, 2, 3, 4, 5, 6)).startOf('day'),
+        ms = moment(new Date(2011, 1, 2, 3, 4, 5, 6)).startOf('days'),
+        ma = moment(new Date(2011, 1, 2, 3, 4, 5, 6)).startOf('d');
+    assert.equal(+m, +ms, 'Plural or singular should work');
+    assert.equal(+m, +ma, 'Full or abbreviated should work');
+    assert.equal(m.year(), 2011, 'keep the year');
+    assert.equal(m.month(), 1, 'keep the month');
+    assert.equal(m.date(), 2, 'keep the day');
+    assert.equal(m.hours(), 0, 'strip out the hours');
+    assert.equal(m.minutes(), 0, 'strip out the minutes');
+    assert.equal(m.seconds(), 0, 'strip out the seconds');
+    assert.equal(m.milliseconds(), 0, 'strip out the milliseconds');
+});
+
+test('end of day', function (assert) {
+    var m = moment(new Date(2011, 1, 2, 3, 4, 5, 6)).endOf('day'),
+        ms = moment(new Date(2011, 1, 2, 3, 4, 5, 6)).endOf('days'),
+        ma = moment(new Date(2011, 1, 2, 3, 4, 5, 6)).endOf('d');
+    assert.equal(+m, +ms, 'Plural or singular should work');
+    assert.equal(+m, +ma, 'Full or abbreviated should work');
+    assert.equal(m.year(), 2011, 'keep the year');
+    assert.equal(m.month(), 1, 'keep the month');
+    assert.equal(m.date(), 2, 'keep the day');
+    assert.equal(m.hours(), 23, 'set the hours');
+    assert.equal(m.minutes(), 59, 'set the minutes');
+    assert.equal(m.seconds(), 59, 'set the seconds');
+    assert.equal(m.milliseconds(), 999, 'set the seconds');
+});
+
+test('start of date', function (assert) {
+    var m = moment(new Date(2011, 1, 2, 3, 4, 5, 6)).startOf('date'),
+        ms = moment(new Date(2011, 1, 2, 3, 4, 5, 6)).startOf('dates');
+
+    assert.equal(+m, +ms, 'Plural or singular should work');
+    assert.equal(m.year(), 2011, 'keep the year');
+    assert.equal(m.month(), 1, 'keep the month');
+    assert.equal(m.date(), 2, 'keep the day');
+    assert.equal(m.hours(), 0, 'strip out the hours');
+    assert.equal(m.minutes(), 0, 'strip out the minutes');
+    assert.equal(m.seconds(), 0, 'strip out the seconds');
+    assert.equal(m.milliseconds(), 0, 'strip out the milliseconds');
+});
+
+test('end of date', function (assert) {
+    var m = moment(new Date(2011, 1, 2, 3, 4, 5, 6)).endOf('date'),
+        ms = moment(new Date(2011, 1, 2, 3, 4, 5, 6)).endOf('dates');
+
+    assert.equal(+m, +ms, 'Plural or singular should work');
+    assert.equal(m.year(), 2011, 'keep the year');
+    assert.equal(m.month(), 1, 'keep the month');
+    assert.equal(m.date(), 2, 'keep the day');
+    assert.equal(m.hours(), 23, 'set the hours');
+    assert.equal(m.minutes(), 59, 'set the minutes');
+    assert.equal(m.seconds(), 59, 'set the seconds');
+    assert.equal(m.milliseconds(), 999, 'set the seconds');
+});
+
+
+test('start of hour', function (assert) {
+    var m = moment(new Date(2011, 1, 2, 3, 4, 5, 6)).startOf('hour'),
+        ms = moment(new Date(2011, 1, 2, 3, 4, 5, 6)).startOf('hours'),
+        ma = moment(new Date(2011, 1, 2, 3, 4, 5, 6)).startOf('h');
+    assert.equal(+m, +ms, 'Plural or singular should work');
+    assert.equal(+m, +ma, 'Full or abbreviated should work');
+    assert.equal(m.year(), 2011, 'keep the year');
+    assert.equal(m.month(), 1, 'keep the month');
+    assert.equal(m.date(), 2, 'keep the day');
+    assert.equal(m.hours(), 3, 'keep the hours');
+    assert.equal(m.minutes(), 0, 'strip out the minutes');
+    assert.equal(m.seconds(), 0, 'strip out the seconds');
+    assert.equal(m.milliseconds(), 0, 'strip out the milliseconds');
+});
+
+test('end of hour', function (assert) {
+    var m = moment(new Date(2011, 1, 2, 3, 4, 5, 6)).endOf('hour'),
+        ms = moment(new Date(2011, 1, 2, 3, 4, 5, 6)).endOf('hours'),
+        ma = moment(new Date(2011, 1, 2, 3, 4, 5, 6)).endOf('h');
+    assert.equal(+m, +ms, 'Plural or singular should work');
+    assert.equal(+m, +ma, 'Full or abbreviated should work');
+    assert.equal(m.year(), 2011, 'keep the year');
+    assert.equal(m.month(), 1, 'keep the month');
+    assert.equal(m.date(), 2, 'keep the day');
+    assert.equal(m.hours(), 3, 'keep the hours');
+    assert.equal(m.minutes(), 59, 'set the minutes');
+    assert.equal(m.seconds(), 59, 'set the seconds');
+    assert.equal(m.milliseconds(), 999, 'set the seconds');
+});
+
+test('start of minute', function (assert) {
+    var m = moment(new Date(2011, 1, 2, 3, 4, 5, 6)).startOf('minute'),
+        ms = moment(new Date(2011, 1, 2, 3, 4, 5, 6)).startOf('minutes'),
+        ma = moment(new Date(2011, 1, 2, 3, 4, 5, 6)).startOf('m');
+    assert.equal(+m, +ms, 'Plural or singular should work');
+    assert.equal(+m, +ma, 'Full or abbreviated should work');
+    assert.equal(m.year(), 2011, 'keep the year');
+    assert.equal(m.month(), 1, 'keep the month');
+    assert.equal(m.date(), 2, 'keep the day');
+    assert.equal(m.hours(), 3, 'keep the hours');
+    assert.equal(m.minutes(), 4, 'keep the minutes');
+    assert.equal(m.seconds(), 0, 'strip out the seconds');
+    assert.equal(m.milliseconds(), 0, 'strip out the milliseconds');
+});
+
+test('end of minute', function (assert) {
+    var m = moment(new Date(2011, 1, 2, 3, 4, 5, 6)).endOf('minute'),
+        ms = moment(new Date(2011, 1, 2, 3, 4, 5, 6)).endOf('minutes'),
+        ma = moment(new Date(2011, 1, 2, 3, 4, 5, 6)).endOf('m');
+    assert.equal(+m, +ms, 'Plural or singular should work');
+    assert.equal(+m, +ma, 'Full or abbreviated should work');
+    assert.equal(m.year(), 2011, 'keep the year');
+    assert.equal(m.month(), 1, 'keep the month');
+    assert.equal(m.date(), 2, 'keep the day');
+    assert.equal(m.hours(), 3, 'keep the hours');
+    assert.equal(m.minutes(), 4, 'keep the minutes');
+    assert.equal(m.seconds(), 59, 'set the seconds');
+    assert.equal(m.milliseconds(), 999, 'set the seconds');
+});
+
+test('start of second', function (assert) {
+    var m = moment(new Date(2011, 1, 2, 3, 4, 5, 6)).startOf('second'),
+        ms = moment(new Date(2011, 1, 2, 3, 4, 5, 6)).startOf('seconds'),
+        ma = moment(new Date(2011, 1, 2, 3, 4, 5, 6)).startOf('s');
+    assert.equal(+m, +ms, 'Plural or singular should work');
+    assert.equal(+m, +ma, 'Full or abbreviated should work');
+    assert.equal(m.year(), 2011, 'keep the year');
+    assert.equal(m.month(), 1, 'keep the month');
+    assert.equal(m.date(), 2, 'keep the day');
+    assert.equal(m.hours(), 3, 'keep the hours');
+    assert.equal(m.minutes(), 4, 'keep the minutes');
+    assert.equal(m.seconds(), 5, 'keep the the seconds');
+    assert.equal(m.milliseconds(), 0, 'strip out the milliseconds');
+});
+
+test('end of second', function (assert) {
+    var m = moment(new Date(2011, 1, 2, 3, 4, 5, 6)).endOf('second'),
+        ms = moment(new Date(2011, 1, 2, 3, 4, 5, 6)).endOf('seconds'),
+        ma = moment(new Date(2011, 1, 2, 3, 4, 5, 6)).endOf('s');
+    assert.equal(+m, +ms, 'Plural or singular should work');
+    assert.equal(+m, +ma, 'Full or abbreviated should work');
+    assert.equal(m.year(), 2011, 'keep the year');
+    assert.equal(m.month(), 1, 'keep the month');
+    assert.equal(m.date(), 2, 'keep the day');
+    assert.equal(m.hours(), 3, 'keep the hours');
+    assert.equal(m.minutes(), 4, 'keep the minutes');
+    assert.equal(m.seconds(), 5, 'keep the seconds');
+    assert.equal(m.milliseconds(), 999, 'set the seconds');
+});
+
+test('startOf across DST +1', function (assert) {
+    var oldUpdateOffset = moment.updateOffset,
+        // Based on a real story somewhere in America/Los_Angeles
+        dstAt = moment('2014-03-09T02:00:00-08:00').parseZone(),
+        m;
+
+    moment.updateOffset = function (mom, keepTime) {
+        if (mom.isBefore(dstAt)) {
+            mom.utcOffset(-8, keepTime);
+        } else {
+            mom.utcOffset(-7, keepTime);
+        }
+    };
+
+    m = moment('2014-03-15T00:00:00-07:00').parseZone();
+    m.startOf('y');
+    assert.equal(m.format(), '2014-01-01T00:00:00-08:00', 'startOf(\'year\') across +1');
+
+    m = moment('2014-03-15T00:00:00-07:00').parseZone();
+    m.startOf('M');
+    assert.equal(m.format(), '2014-03-01T00:00:00-08:00', 'startOf(\'month\') across +1');
+
+    m = moment('2014-03-09T09:00:00-07:00').parseZone();
+    m.startOf('d');
+    assert.equal(m.format(), '2014-03-09T00:00:00-08:00', 'startOf(\'day\') across +1');
+
+    m = moment('2014-03-09T03:05:00-07:00').parseZone();
+    m.startOf('h');
+    assert.equal(m.format(), '2014-03-09T03:00:00-07:00', 'startOf(\'hour\') after +1');
+
+    m = moment('2014-03-09T01:35:00-08:00').parseZone();
+    m.startOf('h');
+    assert.equal(m.format(), '2014-03-09T01:00:00-08:00', 'startOf(\'hour\') before +1');
+
+    // There is no such time as 2:30-7 to try startOf('hour') across that
+
+    moment.updateOffset = oldUpdateOffset;
+});
+
+test('startOf across DST -1', function (assert) {
+    var oldUpdateOffset = moment.updateOffset,
+        // Based on a real story somewhere in America/Los_Angeles
+        dstAt = moment('2014-11-02T02:00:00-07:00').parseZone(),
+        m;
+
+    moment.updateOffset = function (mom, keepTime) {
+        if (mom.isBefore(dstAt)) {
+            mom.utcOffset(-7, keepTime);
+        } else {
+            mom.utcOffset(-8, keepTime);
+        }
+    };
+
+    m = moment('2014-11-15T00:00:00-08:00').parseZone();
+    m.startOf('y');
+    assert.equal(m.format(), '2014-01-01T00:00:00-07:00', 'startOf(\'year\') across -1');
+
+    m = moment('2014-11-15T00:00:00-08:00').parseZone();
+    m.startOf('M');
+    assert.equal(m.format(), '2014-11-01T00:00:00-07:00', 'startOf(\'month\') across -1');
+
+    m = moment('2014-11-02T09:00:00-08:00').parseZone();
+    m.startOf('d');
+    assert.equal(m.format(), '2014-11-02T00:00:00-07:00', 'startOf(\'day\') across -1');
+
+    // note that utc offset is -8
+    m = moment('2014-11-02T01:30:00-08:00').parseZone();
+    m.startOf('h');
+    assert.equal(m.format(), '2014-11-02T01:00:00-08:00', 'startOf(\'hour\') after +1');
+
+    // note that utc offset is -7
+    m = moment('2014-11-02T01:30:00-07:00').parseZone();
+    m.startOf('h');
+    assert.equal(m.format(), '2014-11-02T01:00:00-07:00', 'startOf(\'hour\') before +1');
+
+    moment.updateOffset = oldUpdateOffset;
+});
+
+test('endOf millisecond and no-arg', function (assert) {
+    var m = moment();
+    assert.equal(+m, +m.clone().endOf(), 'endOf without argument should change time');
+    assert.equal(+m, +m.clone().endOf('ms'), 'endOf with ms argument should change time');
+    assert.equal(+m, +m.clone().endOf('millisecond'), 'endOf with millisecond argument should change time');
+    assert.equal(+m, +m.clone().endOf('milliseconds'), 'endOf with milliseconds argument should change time');
+});
+
+})));
+
+
+;(function (global, factory) {
+   typeof exports === 'object' && typeof module !== 'undefined'
+       && typeof require === 'function' ? factory(require('../../moment')) :
+   typeof define === 'function' && define.amd ? define(['../../moment'], factory) :
+   factory(global.moment)
+}(this, (function (moment) { 'use strict';
+
+function each(array, callback) {
+    var i;
+    for (i = 0; i < array.length; i++) {
+        callback(array[i], i, array);
+    }
+}
+
+function objectKeys(obj) {
+    if (Object.keys) {
+        return Object.keys(obj);
+    } else {
+        // IE8
+        var res = [], i;
+        for (i in obj) {
+            if (obj.hasOwnProperty(i)) {
+                res.push(i);
+            }
+        }
+        return res;
+    }
+}
+
+// Pick the first defined of two or three arguments.
+
+function defineCommonLocaleTests(locale, options) {
+    test('lenient ordinal parsing', function (assert) {
+        var i, ordinalStr, testMoment;
+        for (i = 1; i <= 31; ++i) {
+            ordinalStr = moment([2014, 0, i]).format('YYYY MM Do');
+            testMoment = moment(ordinalStr, 'YYYY MM Do');
+            assert.equal(testMoment.year(), 2014,
+                    'lenient ordinal parsing ' + i + ' year check');
+            assert.equal(testMoment.month(), 0,
+                    'lenient ordinal parsing ' + i + ' month check');
+            assert.equal(testMoment.date(), i,
+                    'lenient ordinal parsing ' + i + ' date check');
+        }
+    });
+
+    test('lenient ordinal parsing of number', function (assert) {
+        var i, testMoment;
+        for (i = 1; i <= 31; ++i) {
+            testMoment = moment('2014 01 ' + i, 'YYYY MM Do');
+            assert.equal(testMoment.year(), 2014,
+                    'lenient ordinal parsing of number ' + i + ' year check');
+            assert.equal(testMoment.month(), 0,
+                    'lenient ordinal parsing of number ' + i + ' month check');
+            assert.equal(testMoment.date(), i,
+                    'lenient ordinal parsing of number ' + i + ' date check');
+        }
+    });
+
+    test('strict ordinal parsing', function (assert) {
+        var i, ordinalStr, testMoment;
+        for (i = 1; i <= 31; ++i) {
+            ordinalStr = moment([2014, 0, i]).format('YYYY MM Do');
+            testMoment = moment(ordinalStr, 'YYYY MM Do', true);
+            assert.ok(testMoment.isValid(), 'strict ordinal parsing ' + i);
+        }
+    });
+
+    test('meridiem invariant', function (assert) {
+        var h, m, t1, t2;
+        for (h = 0; h < 24; ++h) {
+            for (m = 0; m < 60; m += 15) {
+                t1 = moment.utc([2000, 0, 1, h, m]);
+                t2 = moment.utc(t1.format('A h:mm'), 'A h:mm');
+                assert.equal(t2.format('HH:mm'), t1.format('HH:mm'),
+                        'meridiem at ' + t1.format('HH:mm'));
+            }
+        }
+    });
+
+    test('date format correctness', function (assert) {
+        var data, tokens;
+        data = moment.localeData()._longDateFormat;
+        tokens = objectKeys(data);
+        each(tokens, function (srchToken) {
+            // Check each format string to make sure it does not contain any
+            // tokens that need to be expanded.
+            each(tokens, function (baseToken) {
+                // strip escaped sequences
+                var format = data[baseToken].replace(/(\[[^\]]*\])/g, '');
+                assert.equal(false, !!~format.indexOf(srchToken),
+                        'contains ' + srchToken + ' in ' + baseToken);
+            });
+        });
+    });
+
+    test('month parsing correctness', function (assert) {
+        var i, m;
+
+        if (locale === 'tr') {
+            // I can't fix it :(
+            expect(0);
+            return;
+        }
+        function tester(format) {
+            var r;
+            r = moment(m.format(format), format);
+            assert.equal(r.month(), m.month(), 'month ' + i + ' fmt ' + format);
+            r = moment(m.format(format).toLocaleUpperCase(), format);
+            assert.equal(r.month(), m.month(), 'month ' + i + ' fmt ' + format + ' upper');
+            r = moment(m.format(format).toLocaleLowerCase(), format);
+            assert.equal(r.month(), m.month(), 'month ' + i + ' fmt ' + format + ' lower');
+
+            r = moment(m.format(format), format, true);
+            assert.equal(r.month(), m.month(), 'month ' + i + ' fmt ' + format + ' strict');
+            r = moment(m.format(format).toLocaleUpperCase(), format, true);
+            assert.equal(r.month(), m.month(), 'month ' + i + ' fmt ' + format + ' upper strict');
+            r = moment(m.format(format).toLocaleLowerCase(), format, true);
+            assert.equal(r.month(), m.month(), 'month ' + i + ' fmt ' + format + ' lower strict');
+        }
+
+        for (i = 0; i < 12; ++i) {
+            m = moment([2015, i, 15, 18]);
+            tester('MMM');
+            tester('MMM.');
+            tester('MMMM');
+            tester('MMMM.');
+        }
+    });
+
+    test('weekday parsing correctness', function (assert) {
+        var i, m;
+
+        if (locale === 'tr' || locale === 'az' || locale === 'ro') {
+            // tr, az: There is a lower-case letter (ı), that converted to
+            // upper then lower changes to i
+            // ro: there is the letter ț which behaves weird under IE8
+            expect(0);
+            return;
+        }
+        function tester(format) {
+            var r, baseMsg = 'weekday ' + m.weekday() + ' fmt ' + format + ' ' + m.toISOString();
+            r = moment(m.format(format), format);
+            assert.equal(r.weekday(), m.weekday(), baseMsg);
+            r = moment(m.format(format).toLocaleUpperCase(), format);
+            assert.equal(r.weekday(), m.weekday(), baseMsg + ' upper');
+            r = moment(m.format(format).toLocaleLowerCase(), format);
+            assert.equal(r.weekday(), m.weekday(), baseMsg + ' lower');
+
+            r = moment(m.format(format), format, true);
+            assert.equal(r.weekday(), m.weekday(), baseMsg + ' strict');
+            r = moment(m.format(format).toLocaleUpperCase(), format, true);
+            assert.equal(r.weekday(), m.weekday(), baseMsg + ' upper strict');
+            r = moment(m.format(format).toLocaleLowerCase(), format, true);
+            assert.equal(r.weekday(), m.weekday(), baseMsg + ' lower strict');
+        }
+
+        for (i = 0; i < 7; ++i) {
+            m = moment.utc([2015, 0, i + 1, 18]);
+            tester('dd');
+            tester('ddd');
+            tester('dddd');
+        }
+    });
+}
+
+function setupDeprecationHandler(test, moment$$1, scope) {
+    test._expectedDeprecations = null;
+    test._observedDeprecations = null;
+    test._oldSupress = moment$$1.suppressDeprecationWarnings;
+    moment$$1.suppressDeprecationWarnings = true;
+    test.expectedDeprecations = function () {
+        test._expectedDeprecations = arguments;
+        test._observedDeprecations = [];
+    };
+    moment$$1.deprecationHandler = function (name, msg) {
+        var deprecationId = matchedDeprecation(name, msg, test._expectedDeprecations);
+        if (deprecationId === -1) {
+            throw new Error('Unexpected deprecation thrown name=' +
+                    name + ' msg=' + msg);
+        }
+        test._observedDeprecations[deprecationId] = 1;
+    };
+}
+
+function teardownDeprecationHandler(test, moment$$1, scope) {
+    moment$$1.suppressDeprecationWarnings = test._oldSupress;
+
+    if (test._expectedDeprecations != null) {
+        var missedDeprecations = [];
+        each(test._expectedDeprecations, function (deprecationPattern, id) {
+            if (test._observedDeprecations[id] !== 1) {
+                missedDeprecations.push(deprecationPattern);
+            }
+        });
+        if (missedDeprecations.length !== 0) {
+            throw new Error('Expected deprecation warnings did not happen: ' +
+                    missedDeprecations.join(' '));
+        }
+    }
+}
+
+function matchedDeprecation(name, msg, deprecations) {
+    if (deprecations == null) {
+        return -1;
+    }
+    for (var i = 0; i < deprecations.length; ++i) {
+        if (name != null && name === deprecations[i]) {
+            return i;
+        }
+        if (msg != null && msg.substring(0, deprecations[i].length) === deprecations[i]) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+/*global QUnit:false*/
+
+var test = QUnit.test;
+
+var expect = QUnit.expect;
+
+function module$1 (name, lifecycle) {
+    QUnit.module(name, {
+        setup : function () {
+            moment.locale('en');
+            moment.createFromInputFallback = function (config) {
+                throw new Error('input not handled by moment: ' + config._i);
+            };
+            setupDeprecationHandler(test, moment, 'core');
+            if (lifecycle && lifecycle.setup) {
+                lifecycle.setup();
+            }
+        },
+        teardown : function () {
+            teardownDeprecationHandler(test, moment, 'core');
+            if (lifecycle && lifecycle.teardown) {
+                lifecycle.teardown();
+            }
+        }
+    });
+}
+
+module$1('string prototype');
+
+test('string prototype overrides call', function (assert) {
+    var prior = String.prototype.call, b;
+    String.prototype.call = function () {
+        return null;
+    };
+
+    b = moment(new Date(2011, 7, 28, 15, 25, 50, 125));
+    assert.equal(b.format('MMMM Do YYYY, h:mm a'), 'August 28th 2011, 3:25 pm');
+
+    String.prototype.call = prior;
+});
+
+})));
+
+
+;(function (global, factory) {
+   typeof exports === 'object' && typeof module !== 'undefined'
+       && typeof require === 'function' ? factory(require('../../moment')) :
+   typeof define === 'function' && define.amd ? define(['../../moment'], factory) :
+   factory(global.moment)
+}(this, (function (moment) { 'use strict';
+
+function each(array, callback) {
+    var i;
+    for (i = 0; i < array.length; i++) {
+        callback(array[i], i, array);
+    }
+}
+
+function objectKeys(obj) {
+    if (Object.keys) {
+        return Object.keys(obj);
+    } else {
+        // IE8
+        var res = [], i;
+        for (i in obj) {
+            if (obj.hasOwnProperty(i)) {
+                res.push(i);
+            }
+        }
+        return res;
+    }
+}
+
+// Pick the first defined of two or three arguments.
+
+function defineCommonLocaleTests(locale, options) {
+    test('lenient ordinal parsing', function (assert) {
+        var i, ordinalStr, testMoment;
+        for (i = 1; i <= 31; ++i) {
+            ordinalStr = moment([2014, 0, i]).format('YYYY MM Do');
+            testMoment = moment(ordinalStr, 'YYYY MM Do');
+            assert.equal(testMoment.year(), 2014,
+                    'lenient ordinal parsing ' + i + ' year check');
+            assert.equal(testMoment.month(), 0,
+                    'lenient ordinal parsing ' + i + ' month check');
+            assert.equal(testMoment.date(), i,
+                    'lenient ordinal parsing ' + i + ' date check');
+        }
+    });
+
+    test('lenient ordinal parsing of number', function (assert) {
+        var i, testMoment;
+        for (i = 1; i <= 31; ++i) {
+            testMoment = moment('2014 01 ' + i, 'YYYY MM Do');
+            assert.equal(testMoment.year(), 2014,
+                    'lenient ordinal parsing of number ' + i + ' year check');
+            assert.equal(testMoment.month(), 0,
+                    'lenient ordinal parsing of number ' + i + ' month check');
+            assert.equal(testMoment.date(), i,
+                    'lenient ordinal parsing of number ' + i + ' date check');
+        }
+    });
+
+    test('strict ordinal parsing', function (assert) {
+        var i, ordinalStr, testMoment;
+        for (i = 1; i <= 31; ++i) {
+            ordinalStr = moment([2014, 0, i]).format('YYYY MM Do');
+            testMoment = moment(ordinalStr, 'YYYY MM Do', true);
+            assert.ok(testMoment.isValid(), 'strict ordinal parsing ' + i);
+        }
+    });
+
+    test('meridiem invariant', function (assert) {
+        var h, m, t1, t2;
+        for (h = 0; h < 24; ++h) {
+            for (m = 0; m < 60; m += 15) {
+                t1 = moment.utc([2000, 0, 1, h, m]);
+                t2 = moment.utc(t1.format('A h:mm'), 'A h:mm');
+                assert.equal(t2.format('HH:mm'), t1.format('HH:mm'),
+                        'meridiem at ' + t1.format('HH:mm'));
+            }
+        }
+    });
+
+    test('date format correctness', function (assert) {
+        var data, tokens;
+        data = moment.localeData()._longDateFormat;
+        tokens = objectKeys(data);
+        each(tokens, function (srchToken) {
+            // Check each format string to make sure it does not contain any
+            // tokens that need to be expanded.
+            each(tokens, function (baseToken) {
+                // strip escaped sequences
+                var format = data[baseToken].replace(/(\[[^\]]*\])/g, '');
+                assert.equal(false, !!~format.indexOf(srchToken),
+                        'contains ' + srchToken + ' in ' + baseToken);
+            });
+        });
+    });
+
+    test('month parsing correctness', function (assert) {
+        var i, m;
+
+        if (locale === 'tr') {
+            // I can't fix it :(
+            expect(0);
+            return;
+        }
+        function tester(format) {
+            var r;
+            r = moment(m.format(format), format);
+            assert.equal(r.month(), m.month(), 'month ' + i + ' fmt ' + format);
+            r = moment(m.format(format).toLocaleUpperCase(), format);
+            assert.equal(r.month(), m.month(), 'month ' + i + ' fmt ' + format + ' upper');
+            r = moment(m.format(format).toLocaleLowerCase(), format);
+            assert.equal(r.month(), m.month(), 'month ' + i + ' fmt ' + format + ' lower');
+
+            r = moment(m.format(format), format, true);
+            assert.equal(r.month(), m.month(), 'month ' + i + ' fmt ' + format + ' strict');
+            r = moment(m.format(format).toLocaleUpperCase(), format, true);
+            assert.equal(r.month(), m.month(), 'month ' + i + ' fmt ' + format + ' upper strict');
+            r = moment(m.format(format).toLocaleLowerCase(), format, true);
+            assert.equal(r.month(), m.month(), 'month ' + i + ' fmt ' + format + ' lower strict');
+        }
+
+        for (i = 0; i < 12; ++i) {
+            m = moment([2015, i, 15, 18]);
+            tester('MMM');
+            tester('MMM.');
+            tester('MMMM');
+            tester('MMMM.');
+        }
+    });
+
+    test('weekday parsing correctness', function (assert) {
+        var i, m;
+
+        if (locale === 'tr' || locale === 'az' || locale === 'ro') {
+            // tr, az: There is a lower-case letter (ı), that converted to
+            // upper then lower changes to i
+            // ro: there is the letter ț which behaves weird under IE8
+            expect(0);
+            return;
+        }
+        function tester(format) {
+            var r, baseMsg = 'weekday ' + m.weekday() + ' fmt ' + format + ' ' + m.toISOString();
+            r = moment(m.format(format), format);
+            assert.equal(r.weekday(), m.weekday(), baseMsg);
+            r = moment(m.format(format).toLocaleUpperCase(), format);
+            assert.equal(r.weekday(), m.weekday(), baseMsg + ' upper');
+            r = moment(m.format(format).toLocaleLowerCase(), format);
+            assert.equal(r.weekday(), m.weekday(), baseMsg + ' lower');
+
+            r = moment(m.format(format), format, true);
+            assert.equal(r.weekday(), m.weekday(), baseMsg + ' strict');
+            r = moment(m.format(format).toLocaleUpperCase(), format, true);
+            assert.equal(r.weekday(), m.weekday(), baseMsg + ' upper strict');
+            r = moment(m.format(format).toLocaleLowerCase(), format, true);
+            assert.equal(r.weekday(), m.weekday(), baseMsg + ' lower strict');
+        }
+
+        for (i = 0; i < 7; ++i) {
+            m = moment.utc([2015, 0, i + 1, 18]);
+            tester('dd');
+            tester('ddd');
+            tester('dddd');
+        }
+    });
+}
+
+function setupDeprecationHandler(test, moment$$1, scope) {
+    test._expectedDeprecations = null;
+    test._observedDeprecations = null;
+    test._oldSupress = moment$$1.suppressDeprecationWarnings;
+    moment$$1.suppressDeprecationWarnings = true;
+    test.expectedDeprecations = function () {
+        test._expectedDeprecations = arguments;
+        test._observedDeprecations = [];
+    };
+    moment$$1.deprecationHandler = function (name, msg) {
+        var deprecationId = matchedDeprecation(name, msg, test._expectedDeprecations);
+        if (deprecationId === -1) {
+            throw new Error('Unexpected deprecation thrown name=' +
+                    name + ' msg=' + msg);
+        }
+        test._observedDeprecations[deprecationId] = 1;
+    };
+}
+
+function teardownDeprecationHandler(test, moment$$1, scope) {
+    moment$$1.suppressDeprecationWarnings = test._oldSupress;
+
+    if (test._expectedDeprecations != null) {
+        var missedDeprecations = [];
+        each(test._expectedDeprecations, function (deprecationPattern, id) {
+            if (test._observedDeprecations[id] !== 1) {
+                missedDeprecations.push(deprecationPattern);
+            }
+        });
+        if (missedDeprecations.length !== 0) {
+            throw new Error('Expected deprecation warnings did not happen: ' +
+                    missedDeprecations.join(' '));
+        }
+    }
+}
+
+function matchedDeprecation(name, msg, deprecations) {
+    if (deprecations == null) {
+        return -1;
+    }
+    for (var i = 0; i < deprecations.length; ++i) {
+        if (name != null && name === deprecations[i]) {
+            return i;
+        }
+        if (msg != null && msg.substring(0, deprecations[i].length) === deprecations[i]) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+/*global QUnit:false*/
+
+var test = QUnit.test;
+
+var expect = QUnit.expect;
+
+function module$1 (name, lifecycle) {
+    QUnit.module(name, {
+        setup : function () {
+            moment.locale('en');
+            moment.createFromInputFallback = function (config) {
+                throw new Error('input not handled by moment: ' + config._i);
+            };
+            setupDeprecationHandler(test, moment, 'core');
+            if (lifecycle && lifecycle.setup) {
+                lifecycle.setup();
+            }
+        },
+        teardown : function () {
+            teardownDeprecationHandler(test, moment, 'core');
+            if (lifecycle && lifecycle.teardown) {
+                lifecycle.teardown();
+            }
+        }
+    });
+}
+
+module$1('to type');
+
+test('toObject', function (assert) {
+    var expected = {
+        years:2010,
+        months:3,
+        date:5,
+        hours:15,
+        minutes:10,
+        seconds:3,
+        milliseconds:123
+    };
+    assert.deepEqual(moment(expected).toObject(), expected, 'toObject invalid');
+});
+
+test('toArray', function (assert) {
+    var expected = [2014, 11, 26, 11, 46, 58, 17];
+    assert.deepEqual(moment(expected).toArray(), expected, 'toArray invalid');
+});
+
+test('toDate returns a copy of the internal date', function (assert) {
+    var m = moment();
+    var d = m.toDate();
+    m.year(0);
+    assert.notEqual(d, m.toDate());
+});
+
+test('toJSON', function (assert) {
+    if (Date.prototype.toISOString) {
+        var expected = new Date().toISOString();
+        assert.deepEqual(moment(expected).toJSON(), expected, 'toJSON invalid');
+    } else {
+        // IE8
+        expect(0);
+    }
+});
+
+test('toJSON works when moment is frozen', function (assert) {
+    if (Date.prototype.toISOString) {
+        var expected = new Date().toISOString();
+        var m = moment(expected);
+        if (Object.freeze != null) {
+            Object.freeze(m);
+        }
+        assert.deepEqual(m.toJSON(), expected, 'toJSON when frozen invalid');
+    } else {
+        // IE8
+        expect(0);
+    }
+});
+
+})));
+
+
+;(function (global, factory) {
+   typeof exports === 'object' && typeof module !== 'undefined'
+       && typeof require === 'function' ? factory(require('../../moment')) :
+   typeof define === 'function' && define.amd ? define(['../../moment'], factory) :
+   factory(global.moment)
+}(this, (function (moment) { 'use strict';
+
+function each(array, callback) {
+    var i;
+    for (i = 0; i < array.length; i++) {
+        callback(array[i], i, array);
+    }
+}
+
+function objectKeys(obj) {
+    if (Object.keys) {
+        return Object.keys(obj);
+    } else {
+        // IE8
+        var res = [], i;
+        for (i in obj) {
+            if (obj.hasOwnProperty(i)) {
+                res.push(i);
+            }
+        }
+        return res;
+    }
+}
+
+// Pick the first defined of two or three arguments.
+
+function defineCommonLocaleTests(locale, options) {
+    test('lenient ordinal parsing', function (assert) {
+        var i, ordinalStr, testMoment;
+        for (i = 1; i <= 31; ++i) {
+            ordinalStr = moment([2014, 0, i]).format('YYYY MM Do');
+            testMoment = moment(ordinalStr, 'YYYY MM Do');
+            assert.equal(testMoment.year(), 2014,
+                    'lenient ordinal parsing ' + i + ' year check');
+            assert.equal(testMoment.month(), 0,
+                    'lenient ordinal parsing ' + i + ' month check');
+            assert.equal(testMoment.date(), i,
+                    'lenient ordinal parsing ' + i + ' date check');
+        }
+    });
+
+    test('lenient ordinal parsing of number', function (assert) {
+        var i, testMoment;
+        for (i = 1; i <= 31; ++i) {
+            testMoment = moment('2014 01 ' + i, 'YYYY MM Do');
+            assert.equal(testMoment.year(), 2014,
+                    'lenient ordinal parsing of number ' + i + ' year check');
+            assert.equal(testMoment.month(), 0,
+                    'lenient ordinal parsing of number ' + i + ' month check');
+            assert.equal(testMoment.date(), i,
+                    'lenient ordinal parsing of number ' + i + ' date check');
+        }
+    });
+
+    test('strict ordinal parsing', function (assert) {
+        var i, ordinalStr, testMoment;
+        for (i = 1; i <= 31; ++i) {
+            ordinalStr = moment([2014, 0, i]).format('YYYY MM Do');
+            testMoment = moment(ordinalStr, 'YYYY MM Do', true);
+            assert.ok(testMoment.isValid(), 'strict ordinal parsing ' + i);
+        }
+    });
+
+    test('meridiem invariant', function (assert) {
+        var h, m, t1, t2;
+        for (h = 0; h < 24; ++h) {
+            for (m = 0; m < 60; m += 15) {
+                t1 = moment.utc([2000, 0, 1, h, m]);
+                t2 = moment.utc(t1.format('A h:mm'), 'A h:mm');
+                assert.equal(t2.format('HH:mm'), t1.format('HH:mm'),
+                        'meridiem at ' + t1.format('HH:mm'));
+            }
+        }
+    });
+
+    test('date format correctness', function (assert) {
+        var data, tokens;
+        data = moment.localeData()._longDateFormat;
+        tokens = objectKeys(data);
+        each(tokens, function (srchToken) {
+            // Check each format string to make sure it does not contain any
+            // tokens that need to be expanded.
+            each(tokens, function (baseToken) {
+                // strip escaped sequences
+                var format = data[baseToken].replace(/(\[[^\]]*\])/g, '');
+                assert.equal(false, !!~format.indexOf(srchToken),
+                        'contains ' + srchToken + ' in ' + baseToken);
+            });
+        });
+    });
+
+    test('month parsing correctness', function (assert) {
+        var i, m;
+
+        if (locale === 'tr') {
+            // I can't fix it :(
+            expect(0);
+            return;
+        }
+        function tester(format) {
+            var r;
+            r = moment(m.format(format), format);
+            assert.equal(r.month(), m.month(), 'month ' + i + ' fmt ' + format);
+            r = moment(m.format(format).toLocaleUpperCase(), format);
+            assert.equal(r.month(), m.month(), 'month ' + i + ' fmt ' + format + ' upper');
+            r = moment(m.format(format).toLocaleLowerCase(), format);
+            assert.equal(r.month(), m.month(), 'month ' + i + ' fmt ' + format + ' lower');
+
+            r = moment(m.format(format), format, true);
+            assert.equal(r.month(), m.month(), 'month ' + i + ' fmt ' + format + ' strict');
+            r = moment(m.format(format).toLocaleUpperCase(), format, true);
+            assert.equal(r.month(), m.month(), 'month ' + i + ' fmt ' + format + ' upper strict');
+            r = moment(m.format(format).toLocaleLowerCase(), format, true);
+            assert.equal(r.month(), m.month(), 'month ' + i + ' fmt ' + format + ' lower strict');
+        }
+
+        for (i = 0; i < 12; ++i) {
+            m = moment([2015, i, 15, 18]);
+            tester('MMM');
+            tester('MMM.');
+            tester('MMMM');
+            tester('MMMM.');
+        }
+    });
+
+    test('weekday parsing correctness', function (assert) {
+        var i, m;
+
+        if (locale === 'tr' || locale === 'az' || locale === 'ro') {
+            // tr, az: There is a lower-case letter (ı), that converted to
+            // upper then lower changes to i
+            // ro: there is the letter ț which behaves weird under IE8
+            expect(0);
+            return;
+        }
+        function tester(format) {
+            var r, baseMsg = 'weekday ' + m.weekday() + ' fmt ' + format + ' ' + m.toISOString();
+            r = moment(m.format(format), format);
+            assert.equal(r.weekday(), m.weekday(), baseMsg);
+            r = moment(m.format(format).toLocaleUpperCase(), format);
+            assert.equal(r.weekday(), m.weekday(), baseMsg + ' upper');
+            r = moment(m.format(format).toLocaleLowerCase(), format);
+            assert.equal(r.weekday(), m.weekday(), baseMsg + ' lower');
+
+            r = moment(m.format(format), format, true);
+            assert.equal(r.weekday(), m.weekday(), baseMsg + ' strict');
+            r = moment(m.format(format).toLocaleUpperCase(), format, true);
+            assert.equal(r.weekday(), m.weekday(), baseMsg + ' upper strict');
+            r = moment(m.format(format).toLocaleLowerCase(), format, true);
+            assert.equal(r.weekday(), m.weekday(), baseMsg + ' lower strict');
+        }
+
+        for (i = 0; i < 7; ++i) {
+            m = moment.utc([2015, 0, i + 1, 18]);
+            tester('dd');
+            tester('ddd');
+            tester('dddd');
+        }
+    });
+}
+
+function setupDeprecationHandler(test, moment$$1, scope) {
+    test._expectedDeprecations = null;
+    test._observedDeprecations = null;
+    test._oldSupress = moment$$1.suppressDeprecationWarnings;
+    moment$$1.suppressDeprecationWarnings = true;
+    test.expectedDeprecations = function () {
+        test._expectedDeprecations = arguments;
+        test._observedDeprecations = [];
+    };
+    moment$$1.deprecationHandler = function (name, msg) {
+        var deprecationId = matchedDeprecation(name, msg, test._expectedDeprecations);
+        if (deprecationId === -1) {
+            throw new Error('Unexpected deprecation thrown name=' +
+                    name + ' msg=' + msg);
+        }
+        test._observedDeprecations[deprecationId] = 1;
+    };
+}
+
+function teardownDeprecationHandler(test, moment$$1, scope) {
+    moment$$1.suppressDeprecationWarnings = test._oldSupress;
+
+    if (test._expectedDeprecations != null) {
+        var missedDeprecations = [];
+        each(test._expectedDeprecations, function (deprecationPattern, id) {
+            if (test._observedDeprecations[id] !== 1) {
+                missedDeprecations.push(deprecationPattern);
+            }
+        });
+        if (missedDeprecations.length !== 0) {
+            throw new Error('Expected deprecation warnings did not happen: ' +
+                    missedDeprecations.join(' '));
+        }
+    }
+}
+
+function matchedDeprecation(name, msg, deprecations) {
+    if (deprecations == null) {
+        return -1;
+    }
+    for (var i = 0; i < deprecations.length; ++i) {
+        if (name != null && name === deprecations[i]) {
+            return i;
+        }
+        if (msg != null && msg.substring(0, deprecations[i].length) === deprecations[i]) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+/*global QUnit:false*/
+
+var test = QUnit.test;
+
+var expect = QUnit.expect;
+
+function module$1 (name, lifecycle) {
+    QUnit.module(name, {
+        setup : function () {
+            moment.locale('en');
+            moment.createFromInputFallback = function (config) {
+                throw new Error('input not handled by moment: ' + config._i);
+            };
+            setupDeprecationHandler(test, moment, 'core');
+            if (lifecycle && lifecycle.setup) {
+                lifecycle.setup();
+            }
+        },
+        teardown : function () {
+            teardownDeprecationHandler(test, moment, 'core');
+            if (lifecycle && lifecycle.teardown) {
+                lifecycle.teardown();
+            }
+        }
+    });
+}
+
+module$1('utc');
+
+test('utc and local', function (assert) {
+    var m = moment(Date.UTC(2011, 1, 2, 3, 4, 5, 6)), offset, expected;
+    m.utc();
+    // utc
+    assert.equal(m.date(), 2, 'the day should be correct for utc');
+    assert.equal(m.day(), 3, 'the date should be correct for utc');
+    assert.equal(m.hours(), 3, 'the hours should be correct for utc');
+
+    // local
+    m.local();
+    if (m.utcOffset() < -180) {
+        assert.equal(m.date(), 1, 'the date should be correct for local');
+        assert.equal(m.day(), 2, 'the day should be correct for local');
+    } else {
+        assert.equal(m.date(), 2, 'the date should be correct for local');
+        assert.equal(m.day(), 3, 'the day should be correct for local');
+    }
+    offset = Math.floor(m.utcOffset() / 60);
+    expected = (24 + 3 + offset) % 24;
+    assert.equal(m.hours(), expected, 'the hours (' + m.hours() + ') should be correct for local');
+    assert.equal(moment().utc().utcOffset(), 0, 'timezone in utc should always be zero');
+});
+
+test('creating with utc and no arguments', function (assert) {
+    var startOfTest = new Date().valueOf(),
+        momentDefaultUtcTime = moment.utc().valueOf(),
+        afterMomentCreationTime = new Date().valueOf();
+
+    assert.ok(startOfTest <= momentDefaultUtcTime, 'moment UTC default time should be now, not in the past');
+    assert.ok(momentDefaultUtcTime <= afterMomentCreationTime, 'moment UTC default time should be now, not in the future');
+});
+
+test('creating with utc and a date parameter array', function (assert) {
+    var m = moment.utc([2011, 1, 2, 3, 4, 5, 6]);
+    assert.equal(m.date(), 2, 'the day should be correct for utc array');
+    assert.equal(m.hours(), 3, 'the hours should be correct for utc array');
+
+    m = moment.utc('2011-02-02 3:04:05', 'YYYY-MM-DD HH:mm:ss');
+    assert.equal(m.date(), 2, 'the day should be correct for utc parsing format');
+    assert.equal(m.hours(), 3, 'the hours should be correct for utc parsing format');
+
+    m = moment.utc('2011-02-02T03:04:05+00:00');
+    assert.equal(m.date(), 2, 'the day should be correct for utc parsing iso');
+    assert.equal(m.hours(), 3, 'the hours should be correct for utc parsing iso');
+});
+
+test('creating with utc without timezone', function (assert) {
+    var m = moment.utc('2012-01-02T08:20:00');
+    assert.equal(m.date(), 2, 'the day should be correct for utc parse without timezone');
+    assert.equal(m.hours(), 8, 'the hours should be correct for utc parse without timezone');
+
+    m = moment.utc('2012-01-02T08:20:00+09:00');
+    assert.equal(m.date(), 1, 'the day should be correct for utc parse with timezone');
+    assert.equal(m.hours(), 23, 'the hours should be correct for utc parse with timezone');
+});
+
+test('cloning with utc offset', function (assert) {
+    var m = moment.utc('2012-01-02T08:20:00');
+    assert.equal(moment.utc(m)._isUTC, true, 'the local offset should be converted to UTC');
+    assert.equal(moment.utc(m.clone().utc())._isUTC, true, 'the local offset should stay in UTC');
+
+    m.utcOffset(120);
+    assert.equal(moment.utc(m)._isUTC, true, 'the explicit utc offset should stay in UTC');
+    assert.equal(moment.utc(m).utcOffset(), 0, 'the explicit utc offset should have an offset of 0');
+});
+
+test('weekday with utc', function (assert) {
+    assert.equal(
+        moment('2013-09-15T00:00:00Z').utc().weekday(), // first minute of the day
+        moment('2013-09-15T23:59:00Z').utc().weekday(), // last minute of the day
+        'a UTC-moment\'s .weekday() should not be affected by the local timezone'
+    );
+});
+
+})));
+
+
+;(function (global, factory) {
+   typeof exports === 'object' && typeof module !== 'undefined'
+       && typeof require === 'function' ? factory(require('../../moment')) :
+   typeof define === 'function' && define.amd ? define(['../../moment'], factory) :
+   factory(global.moment)
+}(this, (function (moment) { 'use strict';
+
+function each(array, callback) {
+    var i;
+    for (i = 0; i < array.length; i++) {
+        callback(array[i], i, array);
+    }
+}
+
+function objectKeys(obj) {
+    if (Object.keys) {
+        return Object.keys(obj);
+    } else {
+        // IE8
+        var res = [], i;
+        for (i in obj) {
+            if (obj.hasOwnProperty(i)) {
+                res.push(i);
+            }
+        }
+        return res;
+    }
+}
+
+// Pick the first defined of two or three arguments.
+
+function defineCommonLocaleTests(locale, options) {
+    test('lenient ordinal parsing', function (assert) {
+        var i, ordinalStr, testMoment;
+        for (i = 1; i <= 31; ++i) {
+            ordinalStr = moment([2014, 0, i]).format('YYYY MM Do');
+            testMoment = moment(ordinalStr, 'YYYY MM Do');
+            assert.equal(testMoment.year(), 2014,
+                    'lenient ordinal parsing ' + i + ' year check');
+            assert.equal(testMoment.month(), 0,
+                    'lenient ordinal parsing ' + i + ' month check');
+            assert.equal(testMoment.date(), i,
+                    'lenient ordinal parsing ' + i + ' date check');
+        }
+    });
+
+    test('lenient ordinal parsing of number', function (assert) {
+        var i, testMoment;
+        for (i = 1; i <= 31; ++i) {
+            testMoment = moment('2014 01 ' + i, 'YYYY MM Do');
+            assert.equal(testMoment.year(), 2014,
+                    'lenient ordinal parsing of number ' + i + ' year check');
+            assert.equal(testMoment.month(), 0,
+                    'lenient ordinal parsing of number ' + i + ' month check');
+            assert.equal(testMoment.date(), i,
+                    'lenient ordinal parsing of number ' + i + ' date check');
+        }
+    });
+
+    test('strict ordinal parsing', function (assert) {
+        var i, ordinalStr, testMoment;
+        for (i = 1; i <= 31; ++i) {
+            ordinalStr = moment([2014, 0, i]).format('YYYY MM Do');
+            testMoment = moment(ordinalStr, 'YYYY MM Do', true);
+            assert.ok(testMoment.isValid(), 'strict ordinal parsing ' + i);
+        }
+    });
+
+    test('meridiem invariant', function (assert) {
+        var h, m, t1, t2;
+        for (h = 0; h < 24; ++h) {
+            for (m = 0; m < 60; m += 15) {
+                t1 = moment.utc([2000, 0, 1, h, m]);
+                t2 = moment.utc(t1.format('A h:mm'), 'A h:mm');
+                assert.equal(t2.format('HH:mm'), t1.format('HH:mm'),
+                        'meridiem at ' + t1.format('HH:mm'));
+            }
+        }
+    });
+
+    test('date format correctness', function (assert) {
+        var data, tokens;
+        data = moment.localeData()._longDateFormat;
+        tokens = objectKeys(data);
+        each(tokens, function (srchToken) {
+            // Check each format string to make sure it does not contain any
+            // tokens that need to be expanded.
+            each(tokens, function (baseToken) {
+                // strip escaped sequences
+                var format = data[baseToken].replace(/(\[[^\]]*\])/g, '');
+                assert.equal(false, !!~format.indexOf(srchToken),
+                        'contains ' + srchToken + ' in ' + baseToken);
+            });
+        });
+    });
+
+    test('month parsing correctness', function (assert) {
+        var i, m;
+
+        if (locale === 'tr') {
+            // I can't fix it :(
+            expect(0);
+            return;
+        }
+        function tester(format) {
+            var r;
+            r = moment(m.format(format), format);
+            assert.equal(r.month(), m.month(), 'month ' + i + ' fmt ' + format);
+            r = moment(m.format(format).toLocaleUpperCase(), format);
+            assert.equal(r.month(), m.month(), 'month ' + i + ' fmt ' + format + ' upper');
+            r = moment(m.format(format).toLocaleLowerCase(), format);
+            assert.equal(r.month(), m.month(), 'month ' + i + ' fmt ' + format + ' lower');
+
+            r = moment(m.format(format), format, true);
+            assert.equal(r.month(), m.month(), 'month ' + i + ' fmt ' + format + ' strict');
+            r = moment(m.format(format).toLocaleUpperCase(), format, true);
+            assert.equal(r.month(), m.month(), 'month ' + i + ' fmt ' + format + ' upper strict');
+            r = moment(m.format(format).toLocaleLowerCase(), format, true);
+            assert.equal(r.month(), m.month(), 'month ' + i + ' fmt ' + format + ' lower strict');
+        }
+
+        for (i = 0; i < 12; ++i) {
+            m = moment([2015, i, 15, 18]);
+            tester('MMM');
+            tester('MMM.');
+            tester('MMMM');
+            tester('MMMM.');
+        }
+    });
+
+    test('weekday parsing correctness', function (assert) {
+        var i, m;
+
+        if (locale === 'tr' || locale === 'az' || locale === 'ro') {
+            // tr, az: There is a lower-case letter (ı), that converted to
+            // upper then lower changes to i
+            // ro: there is the letter ț which behaves weird under IE8
+            expect(0);
+            return;
+        }
+        function tester(format) {
+            var r, baseMsg = 'weekday ' + m.weekday() + ' fmt ' + format + ' ' + m.toISOString();
+            r = moment(m.format(format), format);
+            assert.equal(r.weekday(), m.weekday(), baseMsg);
+            r = moment(m.format(format).toLocaleUpperCase(), format);
+            assert.equal(r.weekday(), m.weekday(), baseMsg + ' upper');
+            r = moment(m.format(format).toLocaleLowerCase(), format);
+            assert.equal(r.weekday(), m.weekday(), baseMsg + ' lower');
+
+            r = moment(m.format(format), format, true);
+            assert.equal(r.weekday(), m.weekday(), baseMsg + ' strict');
+            r = moment(m.format(format).toLocaleUpperCase(), format, true);
+            assert.equal(r.weekday(), m.weekday(), baseMsg + ' upper strict');
+            r = moment(m.format(format).toLocaleLowerCase(), format, true);
+            assert.equal(r.weekday(), m.weekday(), baseMsg + ' lower strict');
+        }
+
+        for (i = 0; i < 7; ++i) {
+            m = moment.utc([2015, 0, i + 1, 18]);
+            tester('dd');
+            tester('ddd');
+            tester('dddd');
+        }
+    });
+}
+
+function setupDeprecationHandler(test, moment$$1, scope) {
+    test._expectedDeprecations = null;
+    test._observedDeprecations = null;
+    test._oldSupress = moment$$1.suppressDeprecationWarnings;
+    moment$$1.suppressDeprecationWarnings = true;
+    test.expectedDeprecations = function () {
+        test._expectedDeprecations = arguments;
+        test._observedDeprecations = [];
+    };
+    moment$$1.deprecationHandler = function (name, msg) {
+        var deprecationId = matchedDeprecation(name, msg, test._expectedDeprecations);
+        if (deprecationId === -1) {
+            throw new Error('Unexpected deprecation thrown name=' +
+                    name + ' msg=' + msg);
+        }
+        test._observedDeprecations[deprecationId] = 1;
+    };
+}
+
+function teardownDeprecationHandler(test, moment$$1, scope) {
+    moment$$1.suppressDeprecationWarnings = test._oldSupress;
+
+    if (test._expectedDeprecations != null) {
+        var missedDeprecations = [];
+        each(test._expectedDeprecations, function (deprecationPattern, id) {
+            if (test._observedDeprecations[id] !== 1) {
+                missedDeprecations.push(deprecationPattern);
+            }
+        });
+        if (missedDeprecations.length !== 0) {
+            throw new Error('Expected deprecation warnings did not happen: ' +
+                    missedDeprecations.join(' '));
+        }
+    }
+}
+
+function matchedDeprecation(name, msg, deprecations) {
+    if (deprecations == null) {
+        return -1;
+    }
+    for (var i = 0; i < deprecations.length; ++i) {
+        if (name != null && name === deprecations[i]) {
+            return i;
+        }
+        if (msg != null && msg.substring(0, deprecations[i].length) === deprecations[i]) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+/*global QUnit:false*/
+
+var test = QUnit.test;
+
+var expect = QUnit.expect;
+
+function module$1 (name, lifecycle) {
+    QUnit.module(name, {
+        setup : function () {
+            moment.locale('en');
+            moment.createFromInputFallback = function (config) {
+                throw new Error('input not handled by moment: ' + config._i);
+            };
+            setupDeprecationHandler(test, moment, 'core');
+            if (lifecycle && lifecycle.setup) {
+                lifecycle.setup();
+            }
+        },
+        teardown : function () {
+            teardownDeprecationHandler(test, moment, 'core');
+            if (lifecycle && lifecycle.teardown) {
+                lifecycle.teardown();
+            }
+        }
+    });
+}
+
+module$1('utc offset');
+
+test('setter / getter blackbox', function (assert) {
+    var m = moment([2010]);
+
+    assert.equal(m.clone().utcOffset(0).utcOffset(), 0, 'utcOffset 0');
+
+    assert.equal(m.clone().utcOffset(1).utcOffset(), 60, 'utcOffset 1 is 60');
+    assert.equal(m.clone().utcOffset(60).utcOffset(), 60, 'utcOffset 60');
+    assert.equal(m.clone().utcOffset('+01:00').utcOffset(), 60, 'utcOffset +01:00 is 60');
+    assert.equal(m.clone().utcOffset('+0100').utcOffset(), 60, 'utcOffset +0100 is 60');
+
+    assert.equal(m.clone().utcOffset(-1).utcOffset(), -60, 'utcOffset -1 is -60');
+    assert.equal(m.clone().utcOffset(-60).utcOffset(), -60, 'utcOffset -60');
+    assert.equal(m.clone().utcOffset('-01:00').utcOffset(), -60, 'utcOffset -01:00 is -60');
+    assert.equal(m.clone().utcOffset('-0100').utcOffset(), -60, 'utcOffset -0100 is -60');
+
+    assert.equal(m.clone().utcOffset(1.5).utcOffset(), 90, 'utcOffset 1.5 is 90');
+    assert.equal(m.clone().utcOffset(90).utcOffset(), 90, 'utcOffset 1.5 is 90');
+    assert.equal(m.clone().utcOffset('+01:30').utcOffset(), 90, 'utcOffset +01:30 is 90');
+    assert.equal(m.clone().utcOffset('+0130').utcOffset(), 90, 'utcOffset +0130 is 90');
+
+    assert.equal(m.clone().utcOffset(-1.5).utcOffset(), -90, 'utcOffset -1.5');
+    assert.equal(m.clone().utcOffset(-90).utcOffset(), -90, 'utcOffset -90');
+    assert.equal(m.clone().utcOffset('-01:30').utcOffset(), -90, 'utcOffset +01:30 is 90');
+    assert.equal(m.clone().utcOffset('-0130').utcOffset(), -90, 'utcOffset +0130 is 90');
+    assert.equal(m.clone().utcOffset('+00:10').utcOffset(), 10, 'utcOffset +00:10 is 10');
+    assert.equal(m.clone().utcOffset('-00:10').utcOffset(), -10, 'utcOffset +00:10 is 10');
+    assert.equal(m.clone().utcOffset('+0010').utcOffset(), 10, 'utcOffset +0010 is 10');
+    assert.equal(m.clone().utcOffset('-0010').utcOffset(), -10, 'utcOffset +0010 is 10');
+});
+
+test('utcOffset shorthand hours -> minutes', function (assert) {
+    var i;
+    for (i = -15; i <= 15; ++i) {
+        assert.equal(moment().utcOffset(i).utcOffset(), i * 60,
+                '' + i + ' -> ' + i * 60);
+    }
+    assert.equal(moment().utcOffset(-16).utcOffset(), -16, '-16 -> -16');
+    assert.equal(moment().utcOffset(16).utcOffset(), 16, '16 -> 16');
+});
+
+test('isLocal, isUtc, isUtcOffset', function (assert) {
+    assert.ok(moment().isLocal(), 'moment() creates objects in local time');
+    assert.ok(!moment.utc().isLocal(), 'moment.utc creates objects NOT in local time');
+    assert.ok(moment.utc().local().isLocal(), 'moment.fn.local() converts to local time');
+    assert.ok(!moment().utcOffset(5).isLocal(), 'moment.fn.utcOffset(N) puts objects NOT in local time');
+    assert.ok(moment().utcOffset(5).local().isLocal(), 'moment.fn.local() converts to local time');
+
+    assert.ok(moment.utc().isUtc(), 'moment.utc() creates objects in utc time');
+    assert.ok(moment().utcOffset(0).isUtc(), 'utcOffset(0) is equivalent to utc mode');
+    assert.ok(!moment().utcOffset(1).isUtc(), 'utcOffset(1) is NOT equivalent to utc mode');
+
+    assert.ok(!moment().isUtcOffset(), 'moment() creates objects NOT in utc-offset mode');
+    assert.ok(moment.utc().isUtcOffset(), 'moment.utc() creates objects in utc-offset mode');
+    assert.ok(moment().utcOffset(3).isUtcOffset(), 'utcOffset(N != 0) creates objects in utc-offset mode');
+    assert.ok(moment().utcOffset(0).isUtcOffset(), 'utcOffset(0) creates objects in utc-offset mode');
+});
+
+test('isUTC', function (assert) {
+    assert.ok(moment.utc().isUTC(), 'moment.utc() creates objects in utc time');
+    assert.ok(moment().utcOffset(0).isUTC(), 'utcOffset(0) is equivalent to utc mode');
+    assert.ok(!moment().utcOffset(1).isUTC(), 'utcOffset(1) is NOT equivalent to utc mode');
+});
+
+test('change hours when changing the utc offset', function (assert) {
+    var m = moment.utc([2000, 0, 1, 6]);
+    assert.equal(m.hour(), 6, 'UTC 6AM should be 6AM at +0000');
+
+    // sanity check
+    m.utcOffset(0);
+    assert.equal(m.hour(), 6, 'UTC 6AM should be 6AM at +0000');
+
+    m.utcOffset(-60);
+    assert.equal(m.hour(), 5, 'UTC 6AM should be 5AM at -0100');
+
+    m.utcOffset(60);
+    assert.equal(m.hour(), 7, 'UTC 6AM should be 7AM at +0100');
+});
+
+test('change minutes when changing the utc offset', function (assert) {
+    var m = moment.utc([2000, 0, 1, 6, 31]);
+
+    m.utcOffset(0);
+    assert.equal(m.format('HH:mm'), '06:31', 'UTC 6:31AM should be 6:31AM at +0000');
+
+    m.utcOffset(-30);
+    assert.equal(m.format('HH:mm'), '06:01', 'UTC 6:31AM should be 6:01AM at -0030');
+
+    m.utcOffset(30);
+    assert.equal(m.format('HH:mm'), '07:01', 'UTC 6:31AM should be 7:01AM at +0030');
+
+    m.utcOffset(-1380);
+    assert.equal(m.format('HH:mm'), '07:31', 'UTC 6:31AM should be 7:31AM at +1380');
+});
+
+test('distance from the unix epoch', function (assert) {
+    var zoneA = moment(),
+        zoneB = moment(zoneA),
+        zoneC = moment(zoneA),
+        zoneD = moment(zoneA),
+        zoneE = moment(zoneA);
+
+    zoneB.utc();
+    assert.equal(+zoneA, +zoneB, 'moment should equal moment.utc');
+
+    zoneC.utcOffset(60);
+    assert.equal(+zoneA, +zoneC, 'moment should equal moment.utcOffset(60)');
+
+    zoneD.utcOffset(-480);
+    assert.equal(+zoneA, +zoneD,
+            'moment should equal moment.utcOffset(-480)');
+
+    zoneE.utcOffset(-1000);
+    assert.equal(+zoneA, +zoneE,
+            'moment should equal moment.utcOffset(-1000)');
+});
+
+test('update offset after changing any values', function (assert) {
+    var oldOffset = moment.updateOffset,
+        m = moment.utc([2000, 6, 1]);
+
+    moment.updateOffset = function (mom, keepTime) {
+        if (mom.__doChange) {
+            if (+mom > 962409600000) {
+                mom.utcOffset(-120, keepTime);
+            } else {
+                mom.utcOffset(-60, keepTime);
+            }
+        }
+    };
+
+    assert.equal(m.format('ZZ'), '+0000', 'should be at +0000');
+    assert.equal(m.format('HH:mm'), '00:00', 'should start 12AM at +0000 timezone');
+
+    m.__doChange = true;
+    m.add(1, 'h');
+
+    assert.equal(m.format('ZZ'), '-0200', 'should be at -0200');
+    assert.equal(m.format('HH:mm'), '23:00', '1AM at +0000 should be 11PM at -0200 timezone');
+
+    m.subtract(1, 'h');
+
+    assert.equal(m.format('ZZ'), '-0100', 'should be at -0100');
+    assert.equal(m.format('HH:mm'), '23:00', '12AM at +0000 should be 11PM at -0100 timezone');
+
+    moment.updateOffset = oldOffset;
+});
+
+//////////////////
+test('getters and setters', function (assert) {
+    var a = moment([2011, 5, 20]);
+
+    assert.equal(a.clone().utcOffset(-120).year(2012).year(), 2012, 'should get and set year correctly');
+    assert.equal(a.clone().utcOffset(-120).month(1).month(), 1, 'should get and set month correctly');
+    assert.equal(a.clone().utcOffset(-120).date(2).date(), 2, 'should get and set date correctly');
+    assert.equal(a.clone().utcOffset(-120).day(1).day(), 1, 'should get and set day correctly');
+    assert.equal(a.clone().utcOffset(-120).hour(1).hour(), 1, 'should get and set hour correctly');
+    assert.equal(a.clone().utcOffset(-120).minute(1).minute(), 1, 'should get and set minute correctly');
+});
+
+test('getters', function (assert) {
+    var a = moment.utc([2012, 0, 1, 0, 0, 0]);
+
+    assert.equal(a.clone().utcOffset(-120).year(),  2011, 'should get year correctly');
+    assert.equal(a.clone().utcOffset(-120).month(),   11, 'should get month correctly');
+    assert.equal(a.clone().utcOffset(-120).date(),    31, 'should get date correctly');
+    assert.equal(a.clone().utcOffset(-120).hour(),    22, 'should get hour correctly');
+    assert.equal(a.clone().utcOffset(-120).minute(),   0, 'should get minute correctly');
+
+    assert.equal(a.clone().utcOffset(120).year(),  2012, 'should get year correctly');
+    assert.equal(a.clone().utcOffset(120).month(),    0, 'should get month correctly');
+    assert.equal(a.clone().utcOffset(120).date(),     1, 'should get date correctly');
+    assert.equal(a.clone().utcOffset(120).hour(),     2, 'should get hour correctly');
+    assert.equal(a.clone().utcOffset(120).minute(),   0, 'should get minute correctly');
+
+    assert.equal(a.clone().utcOffset(90).year(),  2012, 'should get year correctly');
+    assert.equal(a.clone().utcOffset(90).month(),    0, 'should get month correctly');
+    assert.equal(a.clone().utcOffset(90).date(),     1, 'should get date correctly');
+    assert.equal(a.clone().utcOffset(90).hour(),     1, 'should get hour correctly');
+    assert.equal(a.clone().utcOffset(90).minute(),  30, 'should get minute correctly');
+});
+
+test('from', function (assert) {
+    var zoneA = moment(),
+        zoneB = moment(zoneA).utcOffset(-720),
+        zoneC = moment(zoneA).utcOffset(-360),
+        zoneD = moment(zoneA).utcOffset(690),
+        other = moment(zoneA).add(35, 'm');
+
+    assert.equal(zoneA.from(other), zoneB.from(other), 'moment#from should be the same in all zones');
+    assert.equal(zoneA.from(other), zoneC.from(other), 'moment#from should be the same in all zones');
+    assert.equal(zoneA.from(other), zoneD.from(other), 'moment#from should be the same in all zones');
+});
+
+test('diff', function (assert) {
+    var zoneA = moment(),
+        zoneB = moment(zoneA).utcOffset(-720),
+        zoneC = moment(zoneA).utcOffset(-360),
+        zoneD = moment(zoneA).utcOffset(690),
+        other = moment(zoneA).add(35, 'm');
+
+    assert.equal(zoneA.diff(other), zoneB.diff(other), 'moment#diff should be the same in all zones');
+    assert.equal(zoneA.diff(other), zoneC.diff(other), 'moment#diff should be the same in all zones');
+    assert.equal(zoneA.diff(other), zoneD.diff(other), 'moment#diff should be the same in all zones');
+
+    assert.equal(zoneA.diff(other, 'minute', true), zoneB.diff(other, 'minute', true), 'moment#diff should be the same in all zones');
+    assert.equal(zoneA.diff(other, 'minute', true), zoneC.diff(other, 'minute', true), 'moment#diff should be the same in all zones');
+    assert.equal(zoneA.diff(other, 'minute', true), zoneD.diff(other, 'minute', true), 'moment#diff should be the same in all zones');
+
+    assert.equal(zoneA.diff(other, 'hour', true), zoneB.diff(other, 'hour', true), 'moment#diff should be the same in all zones');
+    assert.equal(zoneA.diff(other, 'hour', true), zoneC.diff(other, 'hour', true), 'moment#diff should be the same in all zones');
+    assert.equal(zoneA.diff(other, 'hour', true), zoneD.diff(other, 'hour', true), 'moment#diff should be the same in all zones');
+});
+
+test('unix offset and timestamp', function (assert) {
+    var zoneA = moment(),
+        zoneB = moment(zoneA).utcOffset(-720),
+        zoneC = moment(zoneA).utcOffset(-360),
+        zoneD = moment(zoneA).utcOffset(690);
+
+    assert.equal(zoneA.unix(), zoneB.unix(), 'moment#unix should be the same in all zones');
+    assert.equal(zoneA.unix(), zoneC.unix(), 'moment#unix should be the same in all zones');
+    assert.equal(zoneA.unix(), zoneD.unix(), 'moment#unix should be the same in all zones');
+
+    assert.equal(+zoneA, +zoneB, 'moment#valueOf should be the same in all zones');
+    assert.equal(+zoneA, +zoneC, 'moment#valueOf should be the same in all zones');
+    assert.equal(+zoneA, +zoneD, 'moment#valueOf should be the same in all zones');
+});
+
+test('cloning', function (assert) {
+    assert.equal(moment().utcOffset(-120).clone().utcOffset(), -120,
+            'explicit cloning should retain the offset');
+    assert.equal(moment().utcOffset(120).clone().utcOffset(), 120,
+            'explicit cloning should retain the offset');
+    assert.equal(moment(moment().utcOffset(-120)).utcOffset(), -120,
+            'implicit cloning should retain the offset');
+    assert.equal(moment(moment().utcOffset(120)).utcOffset(), 120,
+            'implicit cloning should retain the offset');
+});
+
+test('start of / end of', function (assert) {
+    var a = moment.utc([2010, 1, 2, 0, 0, 0]).utcOffset(-450);
+
+    assert.equal(a.clone().startOf('day').hour(), 0,
+            'start of day should work on moments with utc offset');
+    assert.equal(a.clone().startOf('day').minute(), 0,
+            'start of day should work on moments with utc offset');
+    assert.equal(a.clone().startOf('hour').minute(), 0,
+            'start of hour should work on moments with utc offset');
+
+    assert.equal(a.clone().endOf('day').hour(), 23,
+            'end of day should work on moments with utc offset');
+    assert.equal(a.clone().endOf('day').minute(), 59,
+            'end of day should work on moments with utc offset');
+    assert.equal(a.clone().endOf('hour').minute(), 59,
+            'end of hour should work on moments with utc offset');
+});
+
+test('reset offset with moment#utc', function (assert) {
+    var a = moment.utc([2012]).utcOffset(-480);
+
+    assert.equal(a.clone().hour(),      16, 'different utc offset should have different hour');
+    assert.equal(a.clone().utc().hour(), 0, 'calling moment#utc should reset the offset');
+});
+
+test('reset offset with moment#local', function (assert) {
+    var a = moment([2012]).utcOffset(-480);
+
+    assert.equal(a.clone().local().hour(), 0, 'calling moment#local should reset the offset');
+});
+
+test('toDate', function (assert) {
+    var zoneA = new Date(),
+        zoneB = moment(zoneA).utcOffset(-720).toDate(),
+        zoneC = moment(zoneA).utcOffset(-360).toDate(),
+        zoneD = moment(zoneA).utcOffset(690).toDate();
+
+    assert.equal(+zoneA, +zoneB, 'moment#toDate should output a date with the right unix timestamp');
+    assert.equal(+zoneA, +zoneC, 'moment#toDate should output a date with the right unix timestamp');
+    assert.equal(+zoneA, +zoneD, 'moment#toDate should output a date with the right unix timestamp');
+});
+
+test('same / before / after', function (assert) {
+    var zoneA = moment().utc(),
+        zoneB = moment(zoneA).utcOffset(-120),
+        zoneC = moment(zoneA).utcOffset(120);
+
+    assert.ok(zoneA.isSame(zoneB), 'two moments with different offsets should be the same');
+    assert.ok(zoneA.isSame(zoneC), 'two moments with different offsets should be the same');
+
+    assert.ok(zoneA.isSame(zoneB, 'hour'), 'two moments with different offsets should be the same hour');
+    assert.ok(zoneA.isSame(zoneC, 'hour'), 'two moments with different offsets should be the same hour');
+
+    zoneA.add(1, 'hour');
+
+    assert.ok(zoneA.isAfter(zoneB), 'isAfter should work with two moments with different offsets');
+    assert.ok(zoneA.isAfter(zoneC), 'isAfter should work with two moments with different offsets');
+
+    assert.ok(zoneA.isAfter(zoneB, 'hour'), 'isAfter:hour should work with two moments with different offsets');
+    assert.ok(zoneA.isAfter(zoneC, 'hour'), 'isAfter:hour should work with two moments with different offsets');
+
+    zoneA.subtract(2, 'hour');
+
+    assert.ok(zoneA.isBefore(zoneB), 'isBefore should work with two moments with different offsets');
+    assert.ok(zoneA.isBefore(zoneC), 'isBefore should work with two moments with different offsets');
+
+    assert.ok(zoneA.isBefore(zoneB, 'hour'), 'isBefore:hour should work with two moments with different offsets');
+    assert.ok(zoneA.isBefore(zoneC, 'hour'), 'isBefore:hour should work with two moments with different offsets');
+});
+
+test('add / subtract over dst', function (assert) {
+    var oldOffset = moment.updateOffset,
+        m = moment.utc([2000, 2, 31, 3]);
+
+    moment.updateOffset = function (mom, keepTime) {
+        if (mom.clone().utc().month() > 2) {
+            mom.utcOffset(60, keepTime);
+        } else {
+            mom.utcOffset(0, keepTime);
+        }
+    };
+
+    assert.equal(m.hour(), 3, 'should start at 00:00');
+
+    m.add(24, 'hour');
+
+    assert.equal(m.hour(), 4, 'adding 24 hours should disregard dst');
+
+    m.subtract(24, 'hour');
+
+    assert.equal(m.hour(), 3, 'subtracting 24 hours should disregard dst');
+
+    m.add(1, 'day');
+
+    assert.equal(m.hour(), 3, 'adding 1 day should have the same hour');
+
+    m.subtract(1, 'day');
+
+    assert.equal(m.hour(), 3, 'subtracting 1 day should have the same hour');
+
+    m.add(1, 'month');
+
+    assert.equal(m.hour(), 3, 'adding 1 month should have the same hour');
+
+    m.subtract(1, 'month');
+
+    assert.equal(m.hour(), 3, 'subtracting 1 month should have the same hour');
+
+    moment.updateOffset = oldOffset;
+});
+
+test('isDST', function (assert) {
+    var oldOffset = moment.updateOffset;
+
+    moment.updateOffset = function (mom, keepTime) {
+        if (mom.month() > 2 && mom.month() < 9) {
+            mom.utcOffset(60, keepTime);
+        } else {
+            mom.utcOffset(0, keepTime);
+        }
+    };
+
+    assert.ok(!moment().month(0).isDST(),  'Jan should not be summer dst');
+    assert.ok(moment().month(6).isDST(),   'Jul should be summer dst');
+    assert.ok(!moment().month(11).isDST(), 'Dec should not be summer dst');
+
+    moment.updateOffset = function (mom) {
+        if (mom.month() > 2 && mom.month() < 9) {
+            mom.utcOffset(0);
+        } else {
+            mom.utcOffset(60);
+        }
+    };
+
+    assert.ok(moment().month(0).isDST(),  'Jan should be winter dst');
+    assert.ok(!moment().month(6).isDST(), 'Jul should not be winter dst');
+    assert.ok(moment().month(11).isDST(), 'Dec should be winter dst');
+
+    moment.updateOffset = oldOffset;
+});
+
+test('zone names', function (assert) {
+    assert.equal(moment().zoneAbbr(),   '', 'Local zone abbr should be empty');
+    assert.equal(moment().format('z'),  '', 'Local zone formatted abbr should be empty');
+    assert.equal(moment().zoneName(),   '', 'Local zone name should be empty');
+    assert.equal(moment().format('zz'), '', 'Local zone formatted name should be empty');
+
+    assert.equal(moment.utc().zoneAbbr(),   'UTC', 'UTC zone abbr should be UTC');
+    assert.equal(moment.utc().format('z'),  'UTC', 'UTC zone formatted abbr should be UTC');
+    assert.equal(moment.utc().zoneName(),   'Coordinated Universal Time', 'UTC zone abbr should be Coordinated Universal Time');
+    assert.equal(moment.utc().format('zz'), 'Coordinated Universal Time', 'UTC zone formatted abbr should be Coordinated Universal Time');
+});
+
+test('hours alignment with UTC', function (assert) {
+    assert.equal(moment().utcOffset(-120).hasAlignedHourOffset(), true);
+    assert.equal(moment().utcOffset(180).hasAlignedHourOffset(), true);
+    assert.equal(moment().utcOffset(-90).hasAlignedHourOffset(), false);
+    assert.equal(moment().utcOffset(90).hasAlignedHourOffset(), false);
+});
+
+test('hours alignment with other zone', function (assert) {
+    var m = moment().utcOffset(-120);
+
+    assert.equal(m.hasAlignedHourOffset(moment().utcOffset(-180)), true);
+    assert.equal(m.hasAlignedHourOffset(moment().utcOffset(180)), true);
+    assert.equal(m.hasAlignedHourOffset(moment().utcOffset(-90)), false);
+    assert.equal(m.hasAlignedHourOffset(moment().utcOffset(90)), false);
+
+    m = moment().utcOffset(-90);
+
+    assert.equal(m.hasAlignedHourOffset(moment().utcOffset(-180)), false);
+    assert.equal(m.hasAlignedHourOffset(moment().utcOffset(180)), false);
+    assert.equal(m.hasAlignedHourOffset(moment().utcOffset(-30)), true);
+    assert.equal(m.hasAlignedHourOffset(moment().utcOffset(30)), true);
+
+    m = moment().utcOffset(60);
+
+    assert.equal(m.hasAlignedHourOffset(moment().utcOffset(-180)), true);
+    assert.equal(m.hasAlignedHourOffset(moment().utcOffset(180)), true);
+    assert.equal(m.hasAlignedHourOffset(moment().utcOffset(-90)), false);
+    assert.equal(m.hasAlignedHourOffset(moment().utcOffset(90)), false);
+
+    m = moment().utcOffset(-25);
+
+    assert.equal(m.hasAlignedHourOffset(moment().utcOffset(35)), true);
+    assert.equal(m.hasAlignedHourOffset(moment().utcOffset(-85)), true);
+
+    assert.equal(m.hasAlignedHourOffset(moment().utcOffset(-35)), false);
+    assert.equal(m.hasAlignedHourOffset(moment().utcOffset(85)), false);
+});
+
+test('parse zone', function (assert) {
+    var m = moment('2013-01-01T00:00:00-13:00').parseZone();
+    assert.equal(m.utcOffset(), -13 * 60);
+    assert.equal(m.hours(), 0);
+});
+
+test('parse UTC zone', function (assert) {
+    var m = moment('2013-01-01T05:00:00+00:00').parseZone();
+    assert.equal(m.utcOffset(), 0);
+    assert.equal(m.hours(), 5);
+});
+
+test('parse zone static', function (assert) {
+    var m = moment.parseZone('2013-01-01T00:00:00-13:00');
+    assert.equal(m.utcOffset(), -13 * 60);
+    assert.equal(m.hours(), 0);
+});
+
+test('parse zone with more arguments', function (assert) {
+    var m;
+    m = moment.parseZone('2013 01 01 05 -13:00', 'YYYY MM DD HH ZZ');
+    assert.equal(m.format(), '2013-01-01T05:00:00-13:00', 'accept input and format');
+    m = moment.parseZone('2013-01-01-13:00', 'YYYY MM DD ZZ', true);
+    assert.equal(m.isValid(), false, 'accept input, format and strict flag');
+    m = moment.parseZone('2013-01-01-13:00', ['DD MM YYYY ZZ', 'YYYY MM DD ZZ']);
+    assert.equal(m.format(), '2013-01-01T00:00:00-13:00', 'accept input and array of formats');
+});
+
+test('parse zone with a timezone from the format string', function (assert) {
+    var m = moment('11-12-2013 -0400 +1100', 'DD-MM-YYYY ZZ #####').parseZone();
+
+    assert.equal(m.utcOffset(), -4 * 60);
+});
+
+test('parse zone without a timezone included in the format string', function (assert) {
+    var m = moment('11-12-2013 -0400 +1100', 'DD-MM-YYYY').parseZone();
+
+    assert.equal(m.utcOffset(), 11 * 60);
+});
+
+test('timezone format', function (assert) {
+    assert.equal(moment().utcOffset(60).format('ZZ'), '+0100', '-60 -> +0100');
+    assert.equal(moment().utcOffset(90).format('ZZ'), '+0130', '-90 -> +0130');
+    assert.equal(moment().utcOffset(120).format('ZZ'), '+0200', '-120 -> +0200');
+
+    assert.equal(moment().utcOffset(-60).format('ZZ'), '-0100', '+60 -> -0100');
+    assert.equal(moment().utcOffset(-90).format('ZZ'), '-0130', '+90 -> -0130');
+    assert.equal(moment().utcOffset(-120).format('ZZ'), '-0200', '+120 -> -0200');
+});
+
+})));
+
+
+;(function (global, factory) {
+   typeof exports === 'object' && typeof module !== 'undefined'
+       && typeof require === 'function' ? factory(require('../../moment')) :
+   typeof define === 'function' && define.amd ? define(['../../moment'], factory) :
+   factory(global.moment)
+}(this, (function (moment) { 'use strict';
+
+function each(array, callback) {
+    var i;
+    for (i = 0; i < array.length; i++) {
+        callback(array[i], i, array);
+    }
+}
+
+function objectKeys(obj) {
+    if (Object.keys) {
+        return Object.keys(obj);
+    } else {
+        // IE8
+        var res = [], i;
+        for (i in obj) {
+            if (obj.hasOwnProperty(i)) {
+                res.push(i);
+            }
+        }
+        return res;
+    }
+}
+
+// Pick the first defined of two or three arguments.
+
+function defineCommonLocaleTests(locale, options) {
+    test('lenient ordinal parsing', function (assert) {
+        var i, ordinalStr, testMoment;
+        for (i = 1; i <= 31; ++i) {
+            ordinalStr = moment([2014, 0, i]).format('YYYY MM Do');
+            testMoment = moment(ordinalStr, 'YYYY MM Do');
+            assert.equal(testMoment.year(), 2014,
+                    'lenient ordinal parsing ' + i + ' year check');
+            assert.equal(testMoment.month(), 0,
+                    'lenient ordinal parsing ' + i + ' month check');
+            assert.equal(testMoment.date(), i,
+                    'lenient ordinal parsing ' + i + ' date check');
+        }
+    });
+
+    test('lenient ordinal parsing of number', function (assert) {
+        var i, testMoment;
+        for (i = 1; i <= 31; ++i) {
+            testMoment = moment('2014 01 ' + i, 'YYYY MM Do');
+            assert.equal(testMoment.year(), 2014,
+                    'lenient ordinal parsing of number ' + i + ' year check');
+            assert.equal(testMoment.month(), 0,
+                    'lenient ordinal parsing of number ' + i + ' month check');
+            assert.equal(testMoment.date(), i,
+                    'lenient ordinal parsing of number ' + i + ' date check');
+        }
+    });
+
+    test('strict ordinal parsing', function (assert) {
+        var i, ordinalStr, testMoment;
+        for (i = 1; i <= 31; ++i) {
+            ordinalStr = moment([2014, 0, i]).format('YYYY MM Do');
+            testMoment = moment(ordinalStr, 'YYYY MM Do', true);
+            assert.ok(testMoment.isValid(), 'strict ordinal parsing ' + i);
+        }
+    });
+
+    test('meridiem invariant', function (assert) {
+        var h, m, t1, t2;
+        for (h = 0; h < 24; ++h) {
+            for (m = 0; m < 60; m += 15) {
+                t1 = moment.utc([2000, 0, 1, h, m]);
+                t2 = moment.utc(t1.format('A h:mm'), 'A h:mm');
+                assert.equal(t2.format('HH:mm'), t1.format('HH:mm'),
+                        'meridiem at ' + t1.format('HH:mm'));
+            }
+        }
+    });
+
+    test('date format correctness', function (assert) {
+        var data, tokens;
+        data = moment.localeData()._longDateFormat;
+        tokens = objectKeys(data);
+        each(tokens, function (srchToken) {
+            // Check each format string to make sure it does not contain any
+            // tokens that need to be expanded.
+            each(tokens, function (baseToken) {
+                // strip escaped sequences
+                var format = data[baseToken].replace(/(\[[^\]]*\])/g, '');
+                assert.equal(false, !!~format.indexOf(srchToken),
+                        'contains ' + srchToken + ' in ' + baseToken);
+            });
+        });
+    });
+
+    test('month parsing correctness', function (assert) {
+        var i, m;
+
+        if (locale === 'tr') {
+            // I can't fix it :(
+            expect(0);
+            return;
+        }
+        function tester(format) {
+            var r;
+            r = moment(m.format(format), format);
+            assert.equal(r.month(), m.month(), 'month ' + i + ' fmt ' + format);
+            r = moment(m.format(format).toLocaleUpperCase(), format);
+            assert.equal(r.month(), m.month(), 'month ' + i + ' fmt ' + format + ' upper');
+            r = moment(m.format(format).toLocaleLowerCase(), format);
+            assert.equal(r.month(), m.month(), 'month ' + i + ' fmt ' + format + ' lower');
+
+            r = moment(m.format(format), format, true);
+            assert.equal(r.month(), m.month(), 'month ' + i + ' fmt ' + format + ' strict');
+            r = moment(m.format(format).toLocaleUpperCase(), format, true);
+            assert.equal(r.month(), m.month(), 'month ' + i + ' fmt ' + format + ' upper strict');
+            r = moment(m.format(format).toLocaleLowerCase(), format, true);
+            assert.equal(r.month(), m.month(), 'month ' + i + ' fmt ' + format + ' lower strict');
+        }
+
+        for (i = 0; i < 12; ++i) {
+            m = moment([2015, i, 15, 18]);
+            tester('MMM');
+            tester('MMM.');
+            tester('MMMM');
+            tester('MMMM.');
+        }
+    });
+
+    test('weekday parsing correctness', function (assert) {
+        var i, m;
+
+        if (locale === 'tr' || locale === 'az' || locale === 'ro') {
+            // tr, az: There is a lower-case letter (ı), that converted to
+            // upper then lower changes to i
+            // ro: there is the letter ț which behaves weird under IE8
+            expect(0);
+            return;
+        }
+        function tester(format) {
+            var r, baseMsg = 'weekday ' + m.weekday() + ' fmt ' + format + ' ' + m.toISOString();
+            r = moment(m.format(format), format);
+            assert.equal(r.weekday(), m.weekday(), baseMsg);
+            r = moment(m.format(format).toLocaleUpperCase(), format);
+            assert.equal(r.weekday(), m.weekday(), baseMsg + ' upper');
+            r = moment(m.format(format).toLocaleLowerCase(), format);
+            assert.equal(r.weekday(), m.weekday(), baseMsg + ' lower');
+
+            r = moment(m.format(format), format, true);
+            assert.equal(r.weekday(), m.weekday(), baseMsg + ' strict');
+            r = moment(m.format(format).toLocaleUpperCase(), format, true);
+            assert.equal(r.weekday(), m.weekday(), baseMsg + ' upper strict');
+            r = moment(m.format(format).toLocaleLowerCase(), format, true);
+            assert.equal(r.weekday(), m.weekday(), baseMsg + ' lower strict');
+        }
+
+        for (i = 0; i < 7; ++i) {
+            m = moment.utc([2015, 0, i + 1, 18]);
+            tester('dd');
+            tester('ddd');
+            tester('dddd');
+        }
+    });
+}
+
+function setupDeprecationHandler(test, moment$$1, scope) {
+    test._expectedDeprecations = null;
+    test._observedDeprecations = null;
+    test._oldSupress = moment$$1.suppressDeprecationWarnings;
+    moment$$1.suppressDeprecationWarnings = true;
+    test.expectedDeprecations = function () {
+        test._expectedDeprecations = arguments;
+        test._observedDeprecations = [];
+    };
+    moment$$1.deprecationHandler = function (name, msg) {
+        var deprecationId = matchedDeprecation(name, msg, test._expectedDeprecations);
+        if (deprecationId === -1) {
+            throw new Error('Unexpected deprecation thrown name=' +
+                    name + ' msg=' + msg);
+        }
+        test._observedDeprecations[deprecationId] = 1;
+    };
+}
+
+function teardownDeprecationHandler(test, moment$$1, scope) {
+    moment$$1.suppressDeprecationWarnings = test._oldSupress;
+
+    if (test._expectedDeprecations != null) {
+        var missedDeprecations = [];
+        each(test._expectedDeprecations, function (deprecationPattern, id) {
+            if (test._observedDeprecations[id] !== 1) {
+                missedDeprecations.push(deprecationPattern);
+            }
+        });
+        if (missedDeprecations.length !== 0) {
+            throw new Error('Expected deprecation warnings did not happen: ' +
+                    missedDeprecations.join(' '));
+        }
+    }
+}
+
+function matchedDeprecation(name, msg, deprecations) {
+    if (deprecations == null) {
+        return -1;
+    }
+    for (var i = 0; i < deprecations.length; ++i) {
+        if (name != null && name === deprecations[i]) {
+            return i;
+        }
+        if (msg != null && msg.substring(0, deprecations[i].length) === deprecations[i]) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+/*global QUnit:false*/
+
+var test = QUnit.test;
+
+var expect = QUnit.expect;
+
+function module$1 (name, lifecycle) {
+    QUnit.module(name, {
+        setup : function () {
+            moment.locale('en');
+            moment.createFromInputFallback = function (config) {
+                throw new Error('input not handled by moment: ' + config._i);
+            };
+            setupDeprecationHandler(test, moment, 'core');
+            if (lifecycle && lifecycle.setup) {
+                lifecycle.setup();
+            }
+        },
+        teardown : function () {
+            teardownDeprecationHandler(test, moment, 'core');
+            if (lifecycle && lifecycle.teardown) {
+                lifecycle.teardown();
+            }
+        }
+    });
+}
+
+module$1('week year');
+
+test('iso week year', function (assert) {
+    // Some examples taken from http://en.wikipedia.org/wiki/ISO_week
+    assert.equal(moment([2005, 0, 1]).isoWeekYear(), 2004);
+    assert.equal(moment([2005, 0, 2]).isoWeekYear(), 2004);
+    assert.equal(moment([2005, 0, 3]).isoWeekYear(), 2005);
+    assert.equal(moment([2005, 11, 31]).isoWeekYear(), 2005);
+    assert.equal(moment([2006, 0, 1]).isoWeekYear(), 2005);
+    assert.equal(moment([2006, 0, 2]).isoWeekYear(), 2006);
+    assert.equal(moment([2007, 0, 1]).isoWeekYear(), 2007);
+    assert.equal(moment([2007, 11, 30]).isoWeekYear(), 2007);
+    assert.equal(moment([2007, 11, 31]).isoWeekYear(), 2008);
+    assert.equal(moment([2008, 0, 1]).isoWeekYear(), 2008);
+    assert.equal(moment([2008, 11, 28]).isoWeekYear(), 2008);
+    assert.equal(moment([2008, 11, 29]).isoWeekYear(), 2009);
+    assert.equal(moment([2008, 11, 30]).isoWeekYear(), 2009);
+    assert.equal(moment([2008, 11, 31]).isoWeekYear(), 2009);
+    assert.equal(moment([2009, 0, 1]).isoWeekYear(), 2009);
+    assert.equal(moment([2010, 0, 1]).isoWeekYear(), 2009);
+    assert.equal(moment([2010, 0, 2]).isoWeekYear(), 2009);
+    assert.equal(moment([2010, 0, 3]).isoWeekYear(), 2009);
+    assert.equal(moment([2010, 0, 4]).isoWeekYear(), 2010);
+});
+
+test('week year', function (assert) {
+    // Some examples taken from http://en.wikipedia.org/wiki/ISO_week
+    moment.locale('dow: 1,doy: 4', {week: {dow: 1, doy: 4}}); // like iso
+    assert.equal(moment([2005, 0, 1]).weekYear(), 2004);
+    assert.equal(moment([2005, 0, 2]).weekYear(), 2004);
+    assert.equal(moment([2005, 0, 3]).weekYear(), 2005);
+    assert.equal(moment([2005, 11, 31]).weekYear(), 2005);
+    assert.equal(moment([2006, 0, 1]).weekYear(), 2005);
+    assert.equal(moment([2006, 0, 2]).weekYear(), 2006);
+    assert.equal(moment([2007, 0, 1]).weekYear(), 2007);
+    assert.equal(moment([2007, 11, 30]).weekYear(), 2007);
+    assert.equal(moment([2007, 11, 31]).weekYear(), 2008);
+    assert.equal(moment([2008, 0, 1]).weekYear(), 2008);
+    assert.equal(moment([2008, 11, 28]).weekYear(), 2008);
+    assert.equal(moment([2008, 11, 29]).weekYear(), 2009);
+    assert.equal(moment([2008, 11, 30]).weekYear(), 2009);
+    assert.equal(moment([2008, 11, 31]).weekYear(), 2009);
+    assert.equal(moment([2009, 0, 1]).weekYear(), 2009);
+    assert.equal(moment([2010, 0, 1]).weekYear(), 2009);
+    assert.equal(moment([2010, 0, 2]).weekYear(), 2009);
+    assert.equal(moment([2010, 0, 3]).weekYear(), 2009);
+    assert.equal(moment([2010, 0, 4]).weekYear(), 2010);
+
+    moment.locale('dow: 1,doy: 7', {week: {dow: 1, doy: 7}});
+    assert.equal(moment([2004, 11, 26]).weekYear(), 2004);
+    assert.equal(moment([2004, 11, 27]).weekYear(), 2005);
+    assert.equal(moment([2005, 11, 25]).weekYear(), 2005);
+    assert.equal(moment([2005, 11, 26]).weekYear(), 2006);
+    assert.equal(moment([2006, 11, 31]).weekYear(), 2006);
+    assert.equal(moment([2007,  0,  1]).weekYear(), 2007);
+    assert.equal(moment([2007, 11, 30]).weekYear(), 2007);
+    assert.equal(moment([2007, 11, 31]).weekYear(), 2008);
+    assert.equal(moment([2008, 11, 28]).weekYear(), 2008);
+    assert.equal(moment([2008, 11, 29]).weekYear(), 2009);
+    assert.equal(moment([2009, 11, 27]).weekYear(), 2009);
+    assert.equal(moment([2009, 11, 28]).weekYear(), 2010);
+});
+
+// Verifies that the week number, week day computation is correct for all dow, doy combinations
+test('week year roundtrip', function (assert) {
+    var dow, doy, wd, m, localeName;
+    for (dow = 0; dow < 7; ++dow) {
+        for (doy = dow; doy < dow + 7; ++doy) {
+            for (wd = 0; wd < 7; ++wd) {
+                localeName = 'dow: ' + dow + ', doy: ' + doy;
+                moment.locale(localeName, {week: {dow: dow, doy: doy}});
+                // We use the 10th week as the 1st one can spill to the previous year
+                m = moment('2015 10 ' + wd, 'gggg w d', true);
+                assert.equal(m.format('gggg w d'), '2015 10 ' + wd, 'dow: ' + dow + ' doy: ' + doy + ' wd: ' + wd);
+                m = moment('2015 10 ' + wd, 'gggg w e', true);
+                assert.equal(m.format('gggg w e'), '2015 10 ' + wd, 'dow: ' + dow + ' doy: ' + doy + ' wd: ' + wd);
+                moment.defineLocale(localeName, null);
+            }
+        }
+    }
+});
+
+test('week numbers 2012/2013', function (assert) {
+    moment.locale('dow: 6, doy: 12', {week: {dow: 6, doy: 12}});
+    assert.equal(52, moment('2012-12-28', 'YYYY-MM-DD').week(), '2012-12-28 is week 52'); // 51 -- should be 52?
+    assert.equal(1, moment('2012-12-29', 'YYYY-MM-DD').week(), '2012-12-29 is week 1'); // 52 -- should be 1
+    assert.equal(1, moment('2013-01-01', 'YYYY-MM-DD').week(), '2013-01-01 is week 1'); // 52 -- should be 1
+    assert.equal(2, moment('2013-01-08', 'YYYY-MM-DD').week(), '2013-01-08 is week 2'); // 53 -- should be 2
+    assert.equal(2, moment('2013-01-11', 'YYYY-MM-DD').week(), '2013-01-11 is week 2'); // 53 -- should be 2
+    assert.equal(3, moment('2013-01-12', 'YYYY-MM-DD').week(), '2013-01-12 is week 3'); // 1 -- should be 3
+    assert.equal(52, moment('2012-01-01', 'YYYY-MM-DD').weeksInYear(), 'weeks in 2012 are 52'); // 52
+    moment.defineLocale('dow: 6, doy: 12', null);
+});
+
+test('weeks numbers dow:1 doy:4', function (assert) {
+    moment.locale('dow: 1, doy: 4', {week: {dow: 1, doy: 4}});
+    assert.equal(moment([2012, 0, 1]).week(), 52, 'Jan  1 2012 should be week 52');
+    assert.equal(moment([2012, 0, 2]).week(),  1, 'Jan  2 2012 should be week 1');
+    assert.equal(moment([2012, 0, 8]).week(),  1, 'Jan  8 2012 should be week 1');
+    assert.equal(moment([2012, 0, 9]).week(),  2, 'Jan  9 2012 should be week 2');
+    assert.equal(moment([2012, 0, 15]).week(), 2, 'Jan 15 2012 should be week 2');
+    assert.equal(moment([2007, 0, 1]).week(),  1, 'Jan  1 2007 should be week 1');
+    assert.equal(moment([2007, 0, 7]).week(),  1, 'Jan  7 2007 should be week 1');
+    assert.equal(moment([2007, 0, 8]).week(),  2, 'Jan  8 2007 should be week 2');
+    assert.equal(moment([2007, 0, 14]).week(), 2, 'Jan 14 2007 should be week 2');
+    assert.equal(moment([2007, 0, 15]).week(), 3, 'Jan 15 2007 should be week 3');
+    assert.equal(moment([2007, 11, 31]).week(), 1, 'Dec 31 2007 should be week 1');
+    assert.equal(moment([2008,  0,  1]).week(), 1, 'Jan  1 2008 should be week 1');
+    assert.equal(moment([2008,  0,  6]).week(), 1, 'Jan  6 2008 should be week 1');
+    assert.equal(moment([2008,  0,  7]).week(), 2, 'Jan  7 2008 should be week 2');
+    assert.equal(moment([2008,  0, 13]).week(), 2, 'Jan 13 2008 should be week 2');
+    assert.equal(moment([2008,  0, 14]).week(), 3, 'Jan 14 2008 should be week 3');
+    assert.equal(moment([2002, 11, 30]).week(), 1, 'Dec 30 2002 should be week 1');
+    assert.equal(moment([2003,  0,  1]).week(), 1, 'Jan  1 2003 should be week 1');
+    assert.equal(moment([2003,  0,  5]).week(), 1, 'Jan  5 2003 should be week 1');
+    assert.equal(moment([2003,  0,  6]).week(), 2, 'Jan  6 2003 should be week 2');
+    assert.equal(moment([2003,  0, 12]).week(), 2, 'Jan 12 2003 should be week 2');
+    assert.equal(moment([2003,  0, 13]).week(), 3, 'Jan 13 2003 should be week 3');
+    assert.equal(moment([2008, 11, 29]).week(), 1, 'Dec 29 2008 should be week 1');
+    assert.equal(moment([2009,  0,  1]).week(), 1, 'Jan  1 2009 should be week 1');
+    assert.equal(moment([2009,  0,  4]).week(), 1, 'Jan  4 2009 should be week 1');
+    assert.equal(moment([2009,  0,  5]).week(), 2, 'Jan  5 2009 should be week 2');
+    assert.equal(moment([2009,  0, 11]).week(), 2, 'Jan 11 2009 should be week 2');
+    assert.equal(moment([2009,  0, 13]).week(), 3, 'Jan 12 2009 should be week 3');
+    assert.equal(moment([2009, 11, 28]).week(), 53, 'Dec 28 2009 should be week 53');
+    assert.equal(moment([2010,  0,  1]).week(), 53, 'Jan  1 2010 should be week 53');
+    assert.equal(moment([2010,  0,  3]).week(), 53, 'Jan  3 2010 should be week 53');
+    assert.equal(moment([2010,  0,  4]).week(),  1, 'Jan  4 2010 should be week 1');
+    assert.equal(moment([2010,  0, 10]).week(),  1, 'Jan 10 2010 should be week 1');
+    assert.equal(moment([2010,  0, 11]).week(),  2, 'Jan 11 2010 should be week 2');
+    assert.equal(moment([2010, 11, 27]).week(), 52, 'Dec 27 2010 should be week 52');
+    assert.equal(moment([2011,  0,  1]).week(), 52, 'Jan  1 2011 should be week 52');
+    assert.equal(moment([2011,  0,  2]).week(), 52, 'Jan  2 2011 should be week 52');
+    assert.equal(moment([2011,  0,  3]).week(),  1, 'Jan  3 2011 should be week 1');
+    assert.equal(moment([2011,  0,  9]).week(),  1, 'Jan  9 2011 should be week 1');
+    assert.equal(moment([2011,  0, 10]).week(),  2, 'Jan 10 2011 should be week 2');
+    moment.defineLocale('dow: 1, doy: 4', null);
+});
+
+test('weeks numbers dow:6 doy:12', function (assert) {
+    moment.locale('dow: 6, doy: 12', {week: {dow: 6, doy: 12}});
+    assert.equal(moment([2011, 11, 31]).week(), 1, 'Dec 31 2011 should be week 1');
+    assert.equal(moment([2012,  0,  6]).week(), 1, 'Jan  6 2012 should be week 1');
+    assert.equal(moment([2012,  0,  7]).week(), 2, 'Jan  7 2012 should be week 2');
+    assert.equal(moment([2012,  0, 13]).week(), 2, 'Jan 13 2012 should be week 2');
+    assert.equal(moment([2012,  0, 14]).week(), 3, 'Jan 14 2012 should be week 3');
+    assert.equal(moment([2006, 11, 30]).week(), 1, 'Dec 30 2006 should be week 1');
+    assert.equal(moment([2007,  0,  5]).week(), 1, 'Jan  5 2007 should be week 1');
+    assert.equal(moment([2007,  0,  6]).week(), 2, 'Jan  6 2007 should be week 2');
+    assert.equal(moment([2007,  0, 12]).week(), 2, 'Jan 12 2007 should be week 2');
+    assert.equal(moment([2007,  0, 13]).week(), 3, 'Jan 13 2007 should be week 3');
+    assert.equal(moment([2007, 11, 29]).week(), 1, 'Dec 29 2007 should be week 1');
+    assert.equal(moment([2008,  0,  1]).week(), 1, 'Jan  1 2008 should be week 1');
+    assert.equal(moment([2008,  0,  4]).week(), 1, 'Jan  4 2008 should be week 1');
+    assert.equal(moment([2008,  0,  5]).week(), 2, 'Jan  5 2008 should be week 2');
+    assert.equal(moment([2008,  0, 11]).week(), 2, 'Jan 11 2008 should be week 2');
+    assert.equal(moment([2008,  0, 12]).week(), 3, 'Jan 12 2008 should be week 3');
+    assert.equal(moment([2002, 11, 28]).week(), 1, 'Dec 28 2002 should be week 1');
+    assert.equal(moment([2003,  0,  1]).week(), 1, 'Jan  1 2003 should be week 1');
+    assert.equal(moment([2003,  0,  3]).week(), 1, 'Jan  3 2003 should be week 1');
+    assert.equal(moment([2003,  0,  4]).week(), 2, 'Jan  4 2003 should be week 2');
+    assert.equal(moment([2003,  0, 10]).week(), 2, 'Jan 10 2003 should be week 2');
+    assert.equal(moment([2003,  0, 11]).week(), 3, 'Jan 11 2003 should be week 3');
+    assert.equal(moment([2008, 11, 27]).week(), 1, 'Dec 27 2008 should be week 1');
+    assert.equal(moment([2009,  0,  1]).week(), 1, 'Jan  1 2009 should be week 1');
+    assert.equal(moment([2009,  0,  2]).week(), 1, 'Jan  2 2009 should be week 1');
+    assert.equal(moment([2009,  0,  3]).week(), 2, 'Jan  3 2009 should be week 2');
+    assert.equal(moment([2009,  0,  9]).week(), 2, 'Jan  9 2009 should be week 2');
+    assert.equal(moment([2009,  0, 10]).week(), 3, 'Jan 10 2009 should be week 3');
+    assert.equal(moment([2009, 11, 26]).week(), 1, 'Dec 26 2009 should be week 1');
+    assert.equal(moment([2010,  0,  1]).week(), 1, 'Jan  1 2010 should be week 1');
+    assert.equal(moment([2010,  0,  2]).week(), 2, 'Jan  2 2010 should be week 2');
+    assert.equal(moment([2010,  0,  8]).week(), 2, 'Jan  8 2010 should be week 2');
+    assert.equal(moment([2010,  0,  9]).week(), 3, 'Jan  9 2010 should be week 3');
+    assert.equal(moment([2011, 0,  1]).week(), 1, 'Jan  1 2011 should be week 1');
+    assert.equal(moment([2011, 0,  7]).week(), 1, 'Jan  7 2011 should be week 1');
+    assert.equal(moment([2011, 0,  8]).week(), 2, 'Jan  8 2011 should be week 2');
+    assert.equal(moment([2011, 0, 14]).week(), 2, 'Jan 14 2011 should be week 2');
+    assert.equal(moment([2011, 0, 15]).week(), 3, 'Jan 15 2011 should be week 3');
+    moment.defineLocale('dow: 6, doy: 12', null);
+});
+
+test('weeks numbers dow:1 doy:7', function (assert) {
+    moment.locale('dow: 1, doy: 7', {week: {dow: 1, doy: 7}});
+    assert.equal(moment([2011, 11, 26]).week(), 1, 'Dec 26 2011 should be week 1');
+    assert.equal(moment([2012,  0,  1]).week(), 1, 'Jan  1 2012 should be week 1');
+    assert.equal(moment([2012,  0,  2]).week(), 2, 'Jan  2 2012 should be week 2');
+    assert.equal(moment([2012,  0,  8]).week(), 2, 'Jan  8 2012 should be week 2');
+    assert.equal(moment([2012,  0,  9]).week(), 3, 'Jan  9 2012 should be week 3');
+    assert.equal(moment([2007, 0, 1]).week(),  1, 'Jan  1 2007 should be week 1');
+    assert.equal(moment([2007, 0, 7]).week(),  1, 'Jan  7 2007 should be week 1');
+    assert.equal(moment([2007, 0, 8]).week(),  2, 'Jan  8 2007 should be week 2');
+    assert.equal(moment([2007, 0, 14]).week(), 2, 'Jan 14 2007 should be week 2');
+    assert.equal(moment([2007, 0, 15]).week(), 3, 'Jan 15 2007 should be week 3');
+    assert.equal(moment([2007, 11, 31]).week(), 1, 'Dec 31 2007 should be week 1');
+    assert.equal(moment([2008,  0,  1]).week(), 1, 'Jan  1 2008 should be week 1');
+    assert.equal(moment([2008,  0,  6]).week(), 1, 'Jan  6 2008 should be week 1');
+    assert.equal(moment([2008,  0,  7]).week(), 2, 'Jan  7 2008 should be week 2');
+    assert.equal(moment([2008,  0, 13]).week(), 2, 'Jan 13 2008 should be week 2');
+    assert.equal(moment([2008,  0, 14]).week(), 3, 'Jan 14 2008 should be week 3');
+    assert.equal(moment([2002, 11, 30]).week(), 1, 'Dec 30 2002 should be week 1');
+    assert.equal(moment([2003,  0,  1]).week(), 1, 'Jan  1 2003 should be week 1');
+    assert.equal(moment([2003,  0,  5]).week(), 1, 'Jan  5 2003 should be week 1');
+    assert.equal(moment([2003,  0,  6]).week(), 2, 'Jan  6 2003 should be week 2');
+    assert.equal(moment([2003,  0, 12]).week(), 2, 'Jan 12 2003 should be week 2');
+    assert.equal(moment([2003,  0, 13]).week(), 3, 'Jan 13 2003 should be week 3');
+    assert.equal(moment([2008, 11, 29]).week(), 1, 'Dec 29 2008 should be week 1');
+    assert.equal(moment([2009,  0,  1]).week(), 1, 'Jan  1 2009 should be week 1');
+    assert.equal(moment([2009,  0,  4]).week(), 1, 'Jan  4 2009 should be week 1');
+    assert.equal(moment([2009,  0,  5]).week(), 2, 'Jan  5 2009 should be week 2');
+    assert.equal(moment([2009,  0, 11]).week(), 2, 'Jan 11 2009 should be week 2');
+    assert.equal(moment([2009,  0, 12]).week(), 3, 'Jan 12 2009 should be week 3');
+    assert.equal(moment([2009, 11, 28]).week(), 1, 'Dec 28 2009 should be week 1');
+    assert.equal(moment([2010,  0,  1]).week(), 1, 'Jan  1 2010 should be week 1');
+    assert.equal(moment([2010,  0,  3]).week(), 1, 'Jan  3 2010 should be week 1');
+    assert.equal(moment([2010,  0,  4]).week(), 2, 'Jan  4 2010 should be week 2');
+    assert.equal(moment([2010,  0, 10]).week(), 2, 'Jan 10 2010 should be week 2');
+    assert.equal(moment([2010,  0, 11]).week(), 3, 'Jan 11 2010 should be week 3');
+    assert.equal(moment([2010, 11, 27]).week(), 1, 'Dec 27 2010 should be week 1');
+    assert.equal(moment([2011,  0,  1]).week(), 1, 'Jan  1 2011 should be week 1');
+    assert.equal(moment([2011,  0,  2]).week(), 1, 'Jan  2 2011 should be week 1');
+    assert.equal(moment([2011,  0,  3]).week(), 2, 'Jan  3 2011 should be week 2');
+    assert.equal(moment([2011,  0,  9]).week(), 2, 'Jan  9 2011 should be week 2');
+    assert.equal(moment([2011,  0, 10]).week(), 3, 'Jan 10 2011 should be week 3');
+    moment.defineLocale('dow: 1, doy: 7', null);
+});
+
+test('weeks numbers dow:0 doy:6', function (assert) {
+    moment.locale('dow: 0, doy: 6', {week: {dow: 0, doy: 6}});
+    assert.equal(moment([2012, 0,  1]).week(), 1, 'Jan  1 2012 should be week 1');
+    assert.equal(moment([2012, 0,  7]).week(), 1, 'Jan  7 2012 should be week 1');
+    assert.equal(moment([2012, 0,  8]).week(), 2, 'Jan  8 2012 should be week 2');
+    assert.equal(moment([2012, 0, 14]).week(), 2, 'Jan 14 2012 should be week 2');
+    assert.equal(moment([2012, 0, 15]).week(), 3, 'Jan 15 2012 should be week 3');
+    assert.equal(moment([2006, 11, 31]).week(), 1, 'Dec 31 2006 should be week 1');
+    assert.equal(moment([2007,  0,  1]).week(), 1, 'Jan  1 2007 should be week 1');
+    assert.equal(moment([2007,  0,  6]).week(), 1, 'Jan  6 2007 should be week 1');
+    assert.equal(moment([2007,  0,  7]).week(), 2, 'Jan  7 2007 should be week 2');
+    assert.equal(moment([2007,  0, 13]).week(), 2, 'Jan 13 2007 should be week 2');
+    assert.equal(moment([2007,  0, 14]).week(), 3, 'Jan 14 2007 should be week 3');
+    assert.equal(moment([2007, 11, 29]).week(), 52, 'Dec 29 2007 should be week 52');
+    assert.equal(moment([2008,  0,  1]).week(), 1, 'Jan  1 2008 should be week 1');
+    assert.equal(moment([2008,  0,  5]).week(), 1, 'Jan  5 2008 should be week 1');
+    assert.equal(moment([2008,  0,  6]).week(), 2, 'Jan  6 2008 should be week 2');
+    assert.equal(moment([2008,  0, 12]).week(), 2, 'Jan 12 2008 should be week 2');
+    assert.equal(moment([2008,  0, 13]).week(), 3, 'Jan 13 2008 should be week 3');
+    assert.equal(moment([2002, 11, 29]).week(), 1, 'Dec 29 2002 should be week 1');
+    assert.equal(moment([2003,  0,  1]).week(), 1, 'Jan  1 2003 should be week 1');
+    assert.equal(moment([2003,  0,  4]).week(), 1, 'Jan  4 2003 should be week 1');
+    assert.equal(moment([2003,  0,  5]).week(), 2, 'Jan  5 2003 should be week 2');
+    assert.equal(moment([2003,  0, 11]).week(), 2, 'Jan 11 2003 should be week 2');
+    assert.equal(moment([2003,  0, 12]).week(), 3, 'Jan 12 2003 should be week 3');
+    assert.equal(moment([2008, 11, 28]).week(), 1, 'Dec 28 2008 should be week 1');
+    assert.equal(moment([2009,  0,  1]).week(), 1, 'Jan  1 2009 should be week 1');
+    assert.equal(moment([2009,  0,  3]).week(), 1, 'Jan  3 2009 should be week 1');
+    assert.equal(moment([2009,  0,  4]).week(), 2, 'Jan  4 2009 should be week 2');
+    assert.equal(moment([2009,  0, 10]).week(), 2, 'Jan 10 2009 should be week 2');
+    assert.equal(moment([2009,  0, 11]).week(), 3, 'Jan 11 2009 should be week 3');
+    assert.equal(moment([2009, 11, 27]).week(), 1, 'Dec 27 2009 should be week 1');
+    assert.equal(moment([2010,  0,  1]).week(), 1, 'Jan  1 2010 should be week 1');
+    assert.equal(moment([2010,  0,  2]).week(), 1, 'Jan  2 2010 should be week 1');
+    assert.equal(moment([2010,  0,  3]).week(), 2, 'Jan  3 2010 should be week 2');
+    assert.equal(moment([2010,  0,  9]).week(), 2, 'Jan  9 2010 should be week 2');
+    assert.equal(moment([2010,  0, 10]).week(), 3, 'Jan 10 2010 should be week 3');
+    assert.equal(moment([2010, 11, 26]).week(), 1, 'Dec 26 2010 should be week 1');
+    assert.equal(moment([2011,  0,  1]).week(), 1, 'Jan  1 2011 should be week 1');
+    assert.equal(moment([2011,  0,  2]).week(), 2, 'Jan  2 2011 should be week 2');
+    assert.equal(moment([2011,  0,  8]).week(), 2, 'Jan  8 2011 should be week 2');
+    assert.equal(moment([2011,  0,  9]).week(), 3, 'Jan  9 2011 should be week 3');
+    moment.defineLocale('dow: 0, doy: 6', null);
+});
+
+test('week year overflows', function (assert) {
+    assert.equal('2005-01-01', moment.utc('2004-W53-6', moment.ISO_8601, true).format('YYYY-MM-DD'), '2004-W53-6 is 1st Jan 2005');
+    assert.equal('2007-12-31', moment.utc('2008-W01-1', moment.ISO_8601, true).format('YYYY-MM-DD'), '2008-W01-1 is 31st Dec 2007');
+});
+
+test('weeks overflow', function (assert) {
+    assert.equal(7, moment.utc('2004-W54-1', moment.ISO_8601, true).parsingFlags().overflow, '2004 has only 53 weeks');
+    assert.equal(7, moment.utc('2004-W00-1', moment.ISO_8601, true).parsingFlags().overflow, 'there is no 0th week');
+});
+
+test('weekday overflow', function (assert) {
+    assert.equal(8, moment.utc('2004-W30-0', moment.ISO_8601, true).parsingFlags().overflow, 'there is no 0 iso weekday');
+    assert.equal(8, moment.utc('2004-W30-8', moment.ISO_8601, true).parsingFlags().overflow, 'there is no 8 iso weekday');
+    assert.equal(8, moment.utc('2004-w30-7', 'gggg-[w]ww-e', true).parsingFlags().overflow, 'there is no 7 \'e\' weekday');
+    assert.equal(8, moment.utc('2004-w30-7', 'gggg-[w]ww-d', true).parsingFlags().overflow, 'there is no 7 \'d\' weekday');
+});
+
+test('week year setter works', function (assert) {
+    for (var year = 2000; year <= 2020; year += 1) {
+        assert.equal(moment.utc('2012-12-31T00:00:00.000Z').isoWeekYear(year).isoWeekYear(), year, 'setting iso-week-year to ' + year);
+        assert.equal(moment.utc('2012-12-31T00:00:00.000Z').weekYear(year).weekYear(), year, 'setting week-year to ' + year);
+    }
+
+    assert.equal(moment.utc('2004-W53-1', moment.ISO_8601, true).isoWeekYear(2013).format('GGGG-[W]WW-E'), '2013-W52-1', '2004-W53-1 to 2013');
+    assert.equal(moment.utc('2004-W53-1', moment.ISO_8601, true).isoWeekYear(2020).format('GGGG-[W]WW-E'), '2020-W53-1', '2004-W53-1 to 2020');
+    assert.equal(moment.utc('2005-W52-1', moment.ISO_8601, true).isoWeekYear(2004).format('GGGG-[W]WW-E'), '2004-W52-1', '2005-W52-1 to 2004');
+    assert.equal(moment.utc('2013-W30-4', moment.ISO_8601, true).isoWeekYear(2015).format('GGGG-[W]WW-E'), '2015-W30-4', '2013-W30-4 to 2015');
+
+    assert.equal(moment.utc('2005-w53-0', 'gggg-[w]ww-e', true).weekYear(2013).format('gggg-[w]ww-e'), '2013-w52-0', '2005-w53-0 to 2013');
+    assert.equal(moment.utc('2005-w53-0', 'gggg-[w]ww-e', true).weekYear(2016).format('gggg-[w]ww-e'), '2016-w53-0', '2005-w53-0 to 2016');
+    assert.equal(moment.utc('2004-w52-0', 'gggg-[w]ww-e', true).weekYear(2005).format('gggg-[w]ww-e'), '2005-w52-0', '2004-w52-0 to 2005');
+    assert.equal(moment.utc('2013-w30-4', 'gggg-[w]ww-e', true).weekYear(2015).format('gggg-[w]ww-e'), '2015-w30-4', '2013-w30-4 to 2015');
+});
+
+})));
+
+
+;(function (global, factory) {
+   typeof exports === 'object' && typeof module !== 'undefined'
+       && typeof require === 'function' ? factory(require('../../moment')) :
+   typeof define === 'function' && define.amd ? define(['../../moment'], factory) :
+   factory(global.moment)
+}(this, (function (moment) { 'use strict';
+
+function each(array, callback) {
+    var i;
+    for (i = 0; i < array.length; i++) {
+        callback(array[i], i, array);
+    }
+}
+
+function objectKeys(obj) {
+    if (Object.keys) {
+        return Object.keys(obj);
+    } else {
+        // IE8
+        var res = [], i;
+        for (i in obj) {
+            if (obj.hasOwnProperty(i)) {
+                res.push(i);
+            }
+        }
+        return res;
+    }
+}
+
+// Pick the first defined of two or three arguments.
+
+function defineCommonLocaleTests(locale, options) {
+    test('lenient ordinal parsing', function (assert) {
+        var i, ordinalStr, testMoment;
+        for (i = 1; i <= 31; ++i) {
+            ordinalStr = moment([2014, 0, i]).format('YYYY MM Do');
+            testMoment = moment(ordinalStr, 'YYYY MM Do');
+            assert.equal(testMoment.year(), 2014,
+                    'lenient ordinal parsing ' + i + ' year check');
+            assert.equal(testMoment.month(), 0,
+                    'lenient ordinal parsing ' + i + ' month check');
+            assert.equal(testMoment.date(), i,
+                    'lenient ordinal parsing ' + i + ' date check');
+        }
+    });
+
+    test('lenient ordinal parsing of number', function (assert) {
+        var i, testMoment;
+        for (i = 1; i <= 31; ++i) {
+            testMoment = moment('2014 01 ' + i, 'YYYY MM Do');
+            assert.equal(testMoment.year(), 2014,
+                    'lenient ordinal parsing of number ' + i + ' year check');
+            assert.equal(testMoment.month(), 0,
+                    'lenient ordinal parsing of number ' + i + ' month check');
+            assert.equal(testMoment.date(), i,
+                    'lenient ordinal parsing of number ' + i + ' date check');
+        }
+    });
+
+    test('strict ordinal parsing', function (assert) {
+        var i, ordinalStr, testMoment;
+        for (i = 1; i <= 31; ++i) {
+            ordinalStr = moment([2014, 0, i]).format('YYYY MM Do');
+            testMoment = moment(ordinalStr, 'YYYY MM Do', true);
+            assert.ok(testMoment.isValid(), 'strict ordinal parsing ' + i);
+        }
+    });
+
+    test('meridiem invariant', function (assert) {
+        var h, m, t1, t2;
+        for (h = 0; h < 24; ++h) {
+            for (m = 0; m < 60; m += 15) {
+                t1 = moment.utc([2000, 0, 1, h, m]);
+                t2 = moment.utc(t1.format('A h:mm'), 'A h:mm');
+                assert.equal(t2.format('HH:mm'), t1.format('HH:mm'),
+                        'meridiem at ' + t1.format('HH:mm'));
+            }
+        }
+    });
+
+    test('date format correctness', function (assert) {
+        var data, tokens;
+        data = moment.localeData()._longDateFormat;
+        tokens = objectKeys(data);
+        each(tokens, function (srchToken) {
+            // Check each format string to make sure it does not contain any
+            // tokens that need to be expanded.
+            each(tokens, function (baseToken) {
+                // strip escaped sequences
+                var format = data[baseToken].replace(/(\[[^\]]*\])/g, '');
+                assert.equal(false, !!~format.indexOf(srchToken),
+                        'contains ' + srchToken + ' in ' + baseToken);
+            });
+        });
+    });
+
+    test('month parsing correctness', function (assert) {
+        var i, m;
+
+        if (locale === 'tr') {
+            // I can't fix it :(
+            expect(0);
+            return;
+        }
+        function tester(format) {
+            var r;
+            r = moment(m.format(format), format);
+            assert.equal(r.month(), m.month(), 'month ' + i + ' fmt ' + format);
+            r = moment(m.format(format).toLocaleUpperCase(), format);
+            assert.equal(r.month(), m.month(), 'month ' + i + ' fmt ' + format + ' upper');
+            r = moment(m.format(format).toLocaleLowerCase(), format);
+            assert.equal(r.month(), m.month(), 'month ' + i + ' fmt ' + format + ' lower');
+
+            r = moment(m.format(format), format, true);
+            assert.equal(r.month(), m.month(), 'month ' + i + ' fmt ' + format + ' strict');
+            r = moment(m.format(format).toLocaleUpperCase(), format, true);
+            assert.equal(r.month(), m.month(), 'month ' + i + ' fmt ' + format + ' upper strict');
+            r = moment(m.format(format).toLocaleLowerCase(), format, true);
+            assert.equal(r.month(), m.month(), 'month ' + i + ' fmt ' + format + ' lower strict');
+        }
+
+        for (i = 0; i < 12; ++i) {
+            m = moment([2015, i, 15, 18]);
+            tester('MMM');
+            tester('MMM.');
+            tester('MMMM');
+            tester('MMMM.');
+        }
+    });
+
+    test('weekday parsing correctness', function (assert) {
+        var i, m;
+
+        if (locale === 'tr' || locale === 'az' || locale === 'ro') {
+            // tr, az: There is a lower-case letter (ı), that converted to
+            // upper then lower changes to i
+            // ro: there is the letter ț which behaves weird under IE8
+            expect(0);
+            return;
+        }
+        function tester(format) {
+            var r, baseMsg = 'weekday ' + m.weekday() + ' fmt ' + format + ' ' + m.toISOString();
+            r = moment(m.format(format), format);
+            assert.equal(r.weekday(), m.weekday(), baseMsg);
+            r = moment(m.format(format).toLocaleUpperCase(), format);
+            assert.equal(r.weekday(), m.weekday(), baseMsg + ' upper');
+            r = moment(m.format(format).toLocaleLowerCase(), format);
+            assert.equal(r.weekday(), m.weekday(), baseMsg + ' lower');
+
+            r = moment(m.format(format), format, true);
+            assert.equal(r.weekday(), m.weekday(), baseMsg + ' strict');
+            r = moment(m.format(format).toLocaleUpperCase(), format, true);
+            assert.equal(r.weekday(), m.weekday(), baseMsg + ' upper strict');
+            r = moment(m.format(format).toLocaleLowerCase(), format, true);
+            assert.equal(r.weekday(), m.weekday(), baseMsg + ' lower strict');
+        }
+
+        for (i = 0; i < 7; ++i) {
+            m = moment.utc([2015, 0, i + 1, 18]);
+            tester('dd');
+            tester('ddd');
+            tester('dddd');
+        }
+    });
+}
+
+function setupDeprecationHandler(test, moment$$1, scope) {
+    test._expectedDeprecations = null;
+    test._observedDeprecations = null;
+    test._oldSupress = moment$$1.suppressDeprecationWarnings;
+    moment$$1.suppressDeprecationWarnings = true;
+    test.expectedDeprecations = function () {
+        test._expectedDeprecations = arguments;
+        test._observedDeprecations = [];
+    };
+    moment$$1.deprecationHandler = function (name, msg) {
+        var deprecationId = matchedDeprecation(name, msg, test._expectedDeprecations);
+        if (deprecationId === -1) {
+            throw new Error('Unexpected deprecation thrown name=' +
+                    name + ' msg=' + msg);
+        }
+        test._observedDeprecations[deprecationId] = 1;
+    };
+}
+
+function teardownDeprecationHandler(test, moment$$1, scope) {
+    moment$$1.suppressDeprecationWarnings = test._oldSupress;
+
+    if (test._expectedDeprecations != null) {
+        var missedDeprecations = [];
+        each(test._expectedDeprecations, function (deprecationPattern, id) {
+            if (test._observedDeprecations[id] !== 1) {
+                missedDeprecations.push(deprecationPattern);
+            }
+        });
+        if (missedDeprecations.length !== 0) {
+            throw new Error('Expected deprecation warnings did not happen: ' +
+                    missedDeprecations.join(' '));
+        }
+    }
+}
+
+function matchedDeprecation(name, msg, deprecations) {
+    if (deprecations == null) {
+        return -1;
+    }
+    for (var i = 0; i < deprecations.length; ++i) {
+        if (name != null && name === deprecations[i]) {
+            return i;
+        }
+        if (msg != null && msg.substring(0, deprecations[i].length) === deprecations[i]) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+/*global QUnit:false*/
+
+var test = QUnit.test;
+
+var expect = QUnit.expect;
+
+function module$1 (name, lifecycle) {
+    QUnit.module(name, {
+        setup : function () {
+            moment.locale('en');
+            moment.createFromInputFallback = function (config) {
+                throw new Error('input not handled by moment: ' + config._i);
+            };
+            setupDeprecationHandler(test, moment, 'core');
+            if (lifecycle && lifecycle.setup) {
+                lifecycle.setup();
+            }
+        },
+        teardown : function () {
+            teardownDeprecationHandler(test, moment, 'core');
+            if (lifecycle && lifecycle.teardown) {
+                lifecycle.teardown();
+            }
+        }
+    });
+}
+
+module$1('week day');
+
+test('iso weekday', function (assert) {
+    var i;
+
+    for (i = 0; i < 7; ++i) {
+        moment.locale('dow:' + i + ',doy: 6', {week: {dow: i, doy: 6}});
+        assert.equal(moment([1985, 1,  4]).isoWeekday(), 1, 'Feb  4 1985 is Monday    -- 1st day');
+        assert.equal(moment([2029, 8, 18]).isoWeekday(), 2, 'Sep 18 2029 is Tuesday   -- 2nd day');
+        assert.equal(moment([2013, 3, 24]).isoWeekday(), 3, 'Apr 24 2013 is Wednesday -- 3rd day');
+        assert.equal(moment([2015, 2,  5]).isoWeekday(), 4, 'Mar  5 2015 is Thursday  -- 4th day');
+        assert.equal(moment([1970, 0,  2]).isoWeekday(), 5, 'Jan  2 1970 is Friday    -- 5th day');
+        assert.equal(moment([2001, 4, 12]).isoWeekday(), 6, 'May 12 2001 is Saturday  -- 6th day');
+        assert.equal(moment([2000, 0,  2]).isoWeekday(), 7, 'Jan  2 2000 is Sunday    -- 7th day');
+    }
+});
+
+test('iso weekday setter', function (assert) {
+    var a = moment([2011, 0, 10]);
+    assert.equal(moment(a).isoWeekday(1).date(),  10, 'set from mon to mon');
+    assert.equal(moment(a).isoWeekday(4).date(),  13, 'set from mon to thu');
+    assert.equal(moment(a).isoWeekday(7).date(),  16, 'set from mon to sun');
+    assert.equal(moment(a).isoWeekday(-6).date(),  3, 'set from mon to last mon');
+    assert.equal(moment(a).isoWeekday(-3).date(),  6, 'set from mon to last thu');
+    assert.equal(moment(a).isoWeekday(0).date(),   9, 'set from mon to last sun');
+    assert.equal(moment(a).isoWeekday(8).date(),  17, 'set from mon to next mon');
+    assert.equal(moment(a).isoWeekday(11).date(), 20, 'set from mon to next thu');
+    assert.equal(moment(a).isoWeekday(14).date(), 23, 'set from mon to next sun');
+
+    a = moment([2011, 0, 13]);
+    assert.equal(moment(a).isoWeekday(1).date(), 10, 'set from thu to mon');
+    assert.equal(moment(a).isoWeekday(4).date(), 13, 'set from thu to thu');
+    assert.equal(moment(a).isoWeekday(7).date(), 16, 'set from thu to sun');
+    assert.equal(moment(a).isoWeekday(-6).date(),  3, 'set from thu to last mon');
+    assert.equal(moment(a).isoWeekday(-3).date(),  6, 'set from thu to last thu');
+    assert.equal(moment(a).isoWeekday(0).date(),   9, 'set from thu to last sun');
+    assert.equal(moment(a).isoWeekday(8).date(),  17, 'set from thu to next mon');
+    assert.equal(moment(a).isoWeekday(11).date(), 20, 'set from thu to next thu');
+    assert.equal(moment(a).isoWeekday(14).date(), 23, 'set from thu to next sun');
+
+    a = moment([2011, 0, 16]);
+    assert.equal(moment(a).isoWeekday(1).date(), 10, 'set from sun to mon');
+    assert.equal(moment(a).isoWeekday(4).date(), 13, 'set from sun to thu');
+    assert.equal(moment(a).isoWeekday(7).date(), 16, 'set from sun to sun');
+    assert.equal(moment(a).isoWeekday(-6).date(),  3, 'set from sun to last mon');
+    assert.equal(moment(a).isoWeekday(-3).date(),  6, 'set from sun to last thu');
+    assert.equal(moment(a).isoWeekday(0).date(),   9, 'set from sun to last sun');
+    assert.equal(moment(a).isoWeekday(8).date(),  17, 'set from sun to next mon');
+    assert.equal(moment(a).isoWeekday(11).date(), 20, 'set from sun to next thu');
+    assert.equal(moment(a).isoWeekday(14).date(), 23, 'set from sun to next sun');
+});
+
+test('iso weekday setter with day name', function (assert) {
+    moment.locale('en');
+
+    var a = moment([2011, 0, 10]);
+    assert.equal(moment(a).isoWeekday('Monday').date(),   10, 'set from mon to mon');
+    assert.equal(moment(a).isoWeekday('Thursday').date(), 13, 'set from mon to thu');
+    assert.equal(moment(a).isoWeekday('Sunday').date(),   16, 'set from mon to sun');
+
+    a = moment([2011, 0, 13]);
+    assert.equal(moment(a).isoWeekday('Monday').date(),   10, 'set from thu to mon');
+    assert.equal(moment(a).isoWeekday('Thursday').date(), 13, 'set from thu to thu');
+    assert.equal(moment(a).isoWeekday('Sunday').date(),   16, 'set from thu to sun');
+
+    a = moment([2011, 0, 16]);
+    assert.equal(moment(a).isoWeekday('Monday').date(),   10, 'set from sun to mon');
+    assert.equal(moment(a).isoWeekday('Thursday').date(), 13, 'set from sun to thu');
+    assert.equal(moment(a).isoWeekday('Sunday').date(),   16, 'set from sun to sun');
+});
+
+test('weekday first day of week Sunday (dow 0)', function (assert) {
+    moment.locale('dow: 0,doy: 6', {week: {dow: 0, doy: 6}});
+    assert.equal(moment([1985, 1,  3]).weekday(), 0, 'Feb  3 1985 is Sunday    -- 0th day');
+    assert.equal(moment([2029, 8, 17]).weekday(), 1, 'Sep 17 2029 is Monday    -- 1st day');
+    assert.equal(moment([2013, 3, 23]).weekday(), 2, 'Apr 23 2013 is Tuesday   -- 2nd day');
+    assert.equal(moment([2015, 2,  4]).weekday(), 3, 'Mar  4 2015 is Wednesday -- 3nd day');
+    assert.equal(moment([1970, 0,  1]).weekday(), 4, 'Jan  1 1970 is Thursday  -- 4th day');
+    assert.equal(moment([2001, 4, 11]).weekday(), 5, 'May 11 2001 is Friday    -- 5th day');
+    assert.equal(moment([2000, 0,  1]).weekday(), 6, 'Jan  1 2000 is Saturday  -- 6th day');
+});
+
+test('weekday first day of week Monday (dow 1)', function (assert) {
+    moment.locale('dow: 1,doy: 6', {week: {dow: 1, doy: 6}});
+    assert.equal(moment([1985, 1,  4]).weekday(), 0, 'Feb  4 1985 is Monday    -- 0th day');
+    assert.equal(moment([2029, 8, 18]).weekday(), 1, 'Sep 18 2029 is Tuesday   -- 1st day');
+    assert.equal(moment([2013, 3, 24]).weekday(), 2, 'Apr 24 2013 is Wednesday -- 2nd day');
+    assert.equal(moment([2015, 2,  5]).weekday(), 3, 'Mar  5 2015 is Thursday  -- 3nd day');
+    assert.equal(moment([1970, 0,  2]).weekday(), 4, 'Jan  2 1970 is Friday    -- 4th day');
+    assert.equal(moment([2001, 4, 12]).weekday(), 5, 'May 12 2001 is Saturday  -- 5th day');
+    assert.equal(moment([2000, 0,  2]).weekday(), 6, 'Jan  2 2000 is Sunday    -- 6th day');
+});
+
+test('weekday first day of week Tuesday (dow 2)', function (assert) {
+    moment.locale('dow: 2,doy: 6', {week: {dow: 2, doy: 6}});
+    assert.equal(moment([1985, 1,  5]).weekday(), 0, 'Feb  5 1985 is Tuesday   -- 0th day');
+    assert.equal(moment([2029, 8, 19]).weekday(), 1, 'Sep 19 2029 is Wednesday -- 1st day');
+    assert.equal(moment([2013, 3, 25]).weekday(), 2, 'Apr 25 2013 is Thursday  -- 2nd day');
+    assert.equal(moment([2015, 2,  6]).weekday(), 3, 'Mar  6 2015 is Friday    -- 3nd day');
+    assert.equal(moment([1970, 0,  3]).weekday(), 4, 'Jan  3 1970 is Staturday -- 4th day');
+    assert.equal(moment([2001, 4, 13]).weekday(), 5, 'May 13 2001 is Sunday    -- 5th day');
+    assert.equal(moment([2000, 0,  3]).weekday(), 6, 'Jan  3 2000 is Monday    -- 6th day');
+});
+
+test('weekday first day of week Wednesday (dow 3)', function (assert) {
+    moment.locale('dow: 3,doy: 6', {week: {dow: 3, doy: 6}});
+    assert.equal(moment([1985, 1,  6]).weekday(), 0, 'Feb  6 1985 is Wednesday -- 0th day');
+    assert.equal(moment([2029, 8, 20]).weekday(), 1, 'Sep 20 2029 is Thursday  -- 1st day');
+    assert.equal(moment([2013, 3, 26]).weekday(), 2, 'Apr 26 2013 is Friday    -- 2nd day');
+    assert.equal(moment([2015, 2,  7]).weekday(), 3, 'Mar  7 2015 is Saturday  -- 3nd day');
+    assert.equal(moment([1970, 0,  4]).weekday(), 4, 'Jan  4 1970 is Sunday    -- 4th day');
+    assert.equal(moment([2001, 4, 14]).weekday(), 5, 'May 14 2001 is Monday    -- 5th day');
+    assert.equal(moment([2000, 0,  4]).weekday(), 6, 'Jan  4 2000 is Tuesday   -- 6th day');
+    moment.locale('dow:3,doy:6', null);
+});
+
+test('weekday first day of week Thursday (dow 4)', function (assert) {
+    moment.locale('dow: 4,doy: 6', {week: {dow: 4, doy: 6}});
+    assert.equal(moment([1985, 1,  7]).weekday(), 0, 'Feb  7 1985 is Thursday  -- 0th day');
+    assert.equal(moment([2029, 8, 21]).weekday(), 1, 'Sep 21 2029 is Friday    -- 1st day');
+    assert.equal(moment([2013, 3, 27]).weekday(), 2, 'Apr 27 2013 is Saturday  -- 2nd day');
+    assert.equal(moment([2015, 2,  8]).weekday(), 3, 'Mar  8 2015 is Sunday    -- 3nd day');
+    assert.equal(moment([1970, 0,  5]).weekday(), 4, 'Jan  5 1970 is Monday    -- 4th day');
+    assert.equal(moment([2001, 4, 15]).weekday(), 5, 'May 15 2001 is Tuesday   -- 5th day');
+    assert.equal(moment([2000, 0,  5]).weekday(), 6, 'Jan  5 2000 is Wednesday -- 6th day');
+});
+
+test('weekday first day of week Friday (dow 5)', function (assert) {
+    moment.locale('dow: 5,doy: 6', {week: {dow: 5, doy: 6}});
+    assert.equal(moment([1985, 1,  8]).weekday(), 0, 'Feb  8 1985 is Friday    -- 0th day');
+    assert.equal(moment([2029, 8, 22]).weekday(), 1, 'Sep 22 2029 is Staturday -- 1st day');
+    assert.equal(moment([2013, 3, 28]).weekday(), 2, 'Apr 28 2013 is Sunday    -- 2nd day');
+    assert.equal(moment([2015, 2,  9]).weekday(), 3, 'Mar  9 2015 is Monday    -- 3nd day');
+    assert.equal(moment([1970, 0,  6]).weekday(), 4, 'Jan  6 1970 is Tuesday   -- 4th day');
+    assert.equal(moment([2001, 4, 16]).weekday(), 5, 'May 16 2001 is Wednesday -- 5th day');
+    assert.equal(moment([2000, 0,  6]).weekday(), 6, 'Jan  6 2000 is Thursday  -- 6th day');
+});
+
+test('weekday first day of week Saturday (dow 6)', function (assert) {
+    moment.locale('dow: 6,doy: 6', {week: {dow: 6, doy: 6}});
+    assert.equal(moment([1985, 1,  9]).weekday(), 0, 'Feb  9 1985 is Staturday -- 0th day');
+    assert.equal(moment([2029, 8, 23]).weekday(), 1, 'Sep 23 2029 is Sunday    -- 1st day');
+    assert.equal(moment([2013, 3, 29]).weekday(), 2, 'Apr 29 2013 is Monday    -- 2nd day');
+    assert.equal(moment([2015, 2, 10]).weekday(), 3, 'Mar 10 2015 is Tuesday   -- 3nd day');
+    assert.equal(moment([1970, 0,  7]).weekday(), 4, 'Jan  7 1970 is Wednesday -- 4th day');
+    assert.equal(moment([2001, 4, 17]).weekday(), 5, 'May 17 2001 is Thursday  -- 5th day');
+    assert.equal(moment([2000, 0,  7]).weekday(), 6, 'Jan  7 2000 is Friday    -- 6th day');
+});
+
+})));
+
+
+;(function (global, factory) {
+   typeof exports === 'object' && typeof module !== 'undefined'
+       && typeof require === 'function' ? factory(require('../../moment')) :
+   typeof define === 'function' && define.amd ? define(['../../moment'], factory) :
+   factory(global.moment)
+}(this, (function (moment) { 'use strict';
+
+function each(array, callback) {
+    var i;
+    for (i = 0; i < array.length; i++) {
+        callback(array[i], i, array);
+    }
+}
+
+function objectKeys(obj) {
+    if (Object.keys) {
+        return Object.keys(obj);
+    } else {
+        // IE8
+        var res = [], i;
+        for (i in obj) {
+            if (obj.hasOwnProperty(i)) {
+                res.push(i);
+            }
+        }
+        return res;
+    }
+}
+
+// Pick the first defined of two or three arguments.
+
+function defineCommonLocaleTests(locale, options) {
+    test('lenient ordinal parsing', function (assert) {
+        var i, ordinalStr, testMoment;
+        for (i = 1; i <= 31; ++i) {
+            ordinalStr = moment([2014, 0, i]).format('YYYY MM Do');
+            testMoment = moment(ordinalStr, 'YYYY MM Do');
+            assert.equal(testMoment.year(), 2014,
+                    'lenient ordinal parsing ' + i + ' year check');
+            assert.equal(testMoment.month(), 0,
+                    'lenient ordinal parsing ' + i + ' month check');
+            assert.equal(testMoment.date(), i,
+                    'lenient ordinal parsing ' + i + ' date check');
+        }
+    });
+
+    test('lenient ordinal parsing of number', function (assert) {
+        var i, testMoment;
+        for (i = 1; i <= 31; ++i) {
+            testMoment = moment('2014 01 ' + i, 'YYYY MM Do');
+            assert.equal(testMoment.year(), 2014,
+                    'lenient ordinal parsing of number ' + i + ' year check');
+            assert.equal(testMoment.month(), 0,
+                    'lenient ordinal parsing of number ' + i + ' month check');
+            assert.equal(testMoment.date(), i,
+                    'lenient ordinal parsing of number ' + i + ' date check');
+        }
+    });
+
+    test('strict ordinal parsing', function (assert) {
+        var i, ordinalStr, testMoment;
+        for (i = 1; i <= 31; ++i) {
+            ordinalStr = moment([2014, 0, i]).format('YYYY MM Do');
+            testMoment = moment(ordinalStr, 'YYYY MM Do', true);
+            assert.ok(testMoment.isValid(), 'strict ordinal parsing ' + i);
+        }
+    });
+
+    test('meridiem invariant', function (assert) {
+        var h, m, t1, t2;
+        for (h = 0; h < 24; ++h) {
+            for (m = 0; m < 60; m += 15) {
+                t1 = moment.utc([2000, 0, 1, h, m]);
+                t2 = moment.utc(t1.format('A h:mm'), 'A h:mm');
+                assert.equal(t2.format('HH:mm'), t1.format('HH:mm'),
+                        'meridiem at ' + t1.format('HH:mm'));
+            }
+        }
+    });
+
+    test('date format correctness', function (assert) {
+        var data, tokens;
+        data = moment.localeData()._longDateFormat;
+        tokens = objectKeys(data);
+        each(tokens, function (srchToken) {
+            // Check each format string to make sure it does not contain any
+            // tokens that need to be expanded.
+            each(tokens, function (baseToken) {
+                // strip escaped sequences
+                var format = data[baseToken].replace(/(\[[^\]]*\])/g, '');
+                assert.equal(false, !!~format.indexOf(srchToken),
+                        'contains ' + srchToken + ' in ' + baseToken);
+            });
+        });
+    });
+
+    test('month parsing correctness', function (assert) {
+        var i, m;
+
+        if (locale === 'tr') {
+            // I can't fix it :(
+            expect(0);
+            return;
+        }
+        function tester(format) {
+            var r;
+            r = moment(m.format(format), format);
+            assert.equal(r.month(), m.month(), 'month ' + i + ' fmt ' + format);
+            r = moment(m.format(format).toLocaleUpperCase(), format);
+            assert.equal(r.month(), m.month(), 'month ' + i + ' fmt ' + format + ' upper');
+            r = moment(m.format(format).toLocaleLowerCase(), format);
+            assert.equal(r.month(), m.month(), 'month ' + i + ' fmt ' + format + ' lower');
+
+            r = moment(m.format(format), format, true);
+            assert.equal(r.month(), m.month(), 'month ' + i + ' fmt ' + format + ' strict');
+            r = moment(m.format(format).toLocaleUpperCase(), format, true);
+            assert.equal(r.month(), m.month(), 'month ' + i + ' fmt ' + format + ' upper strict');
+            r = moment(m.format(format).toLocaleLowerCase(), format, true);
+            assert.equal(r.month(), m.month(), 'month ' + i + ' fmt ' + format + ' lower strict');
+        }
+
+        for (i = 0; i < 12; ++i) {
+            m = moment([2015, i, 15, 18]);
+            tester('MMM');
+            tester('MMM.');
+            tester('MMMM');
+            tester('MMMM.');
+        }
+    });
+
+    test('weekday parsing correctness', function (assert) {
+        var i, m;
+
+        if (locale === 'tr' || locale === 'az' || locale === 'ro') {
+            // tr, az: There is a lower-case letter (ı), that converted to
+            // upper then lower changes to i
+            // ro: there is the letter ț which behaves weird under IE8
+            expect(0);
+            return;
+        }
+        function tester(format) {
+            var r, baseMsg = 'weekday ' + m.weekday() + ' fmt ' + format + ' ' + m.toISOString();
+            r = moment(m.format(format), format);
+            assert.equal(r.weekday(), m.weekday(), baseMsg);
+            r = moment(m.format(format).toLocaleUpperCase(), format);
+            assert.equal(r.weekday(), m.weekday(), baseMsg + ' upper');
+            r = moment(m.format(format).toLocaleLowerCase(), format);
+            assert.equal(r.weekday(), m.weekday(), baseMsg + ' lower');
+
+            r = moment(m.format(format), format, true);
+            assert.equal(r.weekday(), m.weekday(), baseMsg + ' strict');
+            r = moment(m.format(format).toLocaleUpperCase(), format, true);
+            assert.equal(r.weekday(), m.weekday(), baseMsg + ' upper strict');
+            r = moment(m.format(format).toLocaleLowerCase(), format, true);
+            assert.equal(r.weekday(), m.weekday(), baseMsg + ' lower strict');
+        }
+
+        for (i = 0; i < 7; ++i) {
+            m = moment.utc([2015, 0, i + 1, 18]);
+            tester('dd');
+            tester('ddd');
+            tester('dddd');
+        }
+    });
+}
+
+function setupDeprecationHandler(test, moment$$1, scope) {
+    test._expectedDeprecations = null;
+    test._observedDeprecations = null;
+    test._oldSupress = moment$$1.suppressDeprecationWarnings;
+    moment$$1.suppressDeprecationWarnings = true;
+    test.expectedDeprecations = function () {
+        test._expectedDeprecations = arguments;
+        test._observedDeprecations = [];
+    };
+    moment$$1.deprecationHandler = function (name, msg) {
+        var deprecationId = matchedDeprecation(name, msg, test._expectedDeprecations);
+        if (deprecationId === -1) {
+            throw new Error('Unexpected deprecation thrown name=' +
+                    name + ' msg=' + msg);
+        }
+        test._observedDeprecations[deprecationId] = 1;
+    };
+}
+
+function teardownDeprecationHandler(test, moment$$1, scope) {
+    moment$$1.suppressDeprecationWarnings = test._oldSupress;
+
+    if (test._expectedDeprecations != null) {
+        var missedDeprecations = [];
+        each(test._expectedDeprecations, function (deprecationPattern, id) {
+            if (test._observedDeprecations[id] !== 1) {
+                missedDeprecations.push(deprecationPattern);
+            }
+        });
+        if (missedDeprecations.length !== 0) {
+            throw new Error('Expected deprecation warnings did not happen: ' +
+                    missedDeprecations.join(' '));
+        }
+    }
+}
+
+function matchedDeprecation(name, msg, deprecations) {
+    if (deprecations == null) {
+        return -1;
+    }
+    for (var i = 0; i < deprecations.length; ++i) {
+        if (name != null && name === deprecations[i]) {
+            return i;
+        }
+        if (msg != null && msg.substring(0, deprecations[i].length) === deprecations[i]) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+/*global QUnit:false*/
+
+var test = QUnit.test;
+
+var expect = QUnit.expect;
+
+function module$1 (name, lifecycle) {
+    QUnit.module(name, {
+        setup : function () {
+            moment.locale('en');
+            moment.createFromInputFallback = function (config) {
+                throw new Error('input not handled by moment: ' + config._i);
+            };
+            setupDeprecationHandler(test, moment, 'core');
+            if (lifecycle && lifecycle.setup) {
+                lifecycle.setup();
+            }
+        },
+        teardown : function () {
+            teardownDeprecationHandler(test, moment, 'core');
+            if (lifecycle && lifecycle.teardown) {
+                lifecycle.teardown();
+            }
+        }
+    });
+}
+
+module$1('weeks');
+
+test('day of year', function (assert) {
+    assert.equal(moment([2000,  0,  1]).dayOfYear(),   1, 'Jan  1 2000 should be day 1 of the year');
+    assert.equal(moment([2000,  1, 28]).dayOfYear(),  59, 'Feb 28 2000 should be day 59 of the year');
+    assert.equal(moment([2000,  1, 29]).dayOfYear(),  60, 'Feb 28 2000 should be day 60 of the year');
+    assert.equal(moment([2000, 11, 31]).dayOfYear(), 366, 'Dec 31 2000 should be day 366 of the year');
+    assert.equal(moment([2001,  0,  1]).dayOfYear(),   1, 'Jan  1 2001 should be day 1 of the year');
+    assert.equal(moment([2001,  1, 28]).dayOfYear(),  59, 'Feb 28 2001 should be day 59 of the year');
+    assert.equal(moment([2001,  2,  1]).dayOfYear(),  60, 'Mar  1 2001 should be day 60 of the year');
+    assert.equal(moment([2001, 11, 31]).dayOfYear(), 365, 'Dec 31 2001 should be day 365 of the year');
+});
+
+test('day of year setters', function (assert) {
+    assert.equal(moment([2000,  0,  1]).dayOfYear(200).dayOfYear(), 200, 'Setting Jan  1 2000 day of the year to 200 should work');
+    assert.equal(moment([2000,  1, 28]).dayOfYear(200).dayOfYear(), 200, 'Setting Feb 28 2000 day of the year to 200 should work');
+    assert.equal(moment([2000,  1, 29]).dayOfYear(200).dayOfYear(), 200, 'Setting Feb 28 2000 day of the year to 200 should work');
+    assert.equal(moment([2000, 11, 31]).dayOfYear(200).dayOfYear(), 200, 'Setting Dec 31 2000 day of the year to 200 should work');
+    assert.equal(moment().dayOfYear(1).dayOfYear(),   1, 'Setting day of the year to 1 should work');
+    assert.equal(moment().dayOfYear(59).dayOfYear(),  59, 'Setting day of the year to 59 should work');
+    assert.equal(moment().dayOfYear(60).dayOfYear(),  60, 'Setting day of the year to 60 should work');
+    assert.equal(moment().dayOfYear(365).dayOfYear(), 365, 'Setting day of the year to 365 should work');
+});
+
+test('iso weeks year starting sunday', function (assert) {
+    assert.equal(moment([2012, 0, 1]).isoWeek(), 52, 'Jan  1 2012 should be iso week 52');
+    assert.equal(moment([2012, 0, 2]).isoWeek(),  1, 'Jan  2 2012 should be iso week 1');
+    assert.equal(moment([2012, 0, 8]).isoWeek(),  1, 'Jan  8 2012 should be iso week 1');
+    assert.equal(moment([2012, 0, 9]).isoWeek(),  2, 'Jan  9 2012 should be iso week 2');
+    assert.equal(moment([2012, 0, 15]).isoWeek(), 2, 'Jan 15 2012 should be iso week 2');
+});
+
+test('iso weeks year starting monday', function (assert) {
+    assert.equal(moment([2007, 0, 1]).isoWeek(),  1, 'Jan  1 2007 should be iso week 1');
+    assert.equal(moment([2007, 0, 7]).isoWeek(),  1, 'Jan  7 2007 should be iso week 1');
+    assert.equal(moment([2007, 0, 8]).isoWeek(),  2, 'Jan  8 2007 should be iso week 2');
+    assert.equal(moment([2007, 0, 14]).isoWeek(), 2, 'Jan 14 2007 should be iso week 2');
+    assert.equal(moment([2007, 0, 15]).isoWeek(), 3, 'Jan 15 2007 should be iso week 3');
+});
+
+test('iso weeks year starting tuesday', function (assert) {
+    assert.equal(moment([2007, 11, 31]).isoWeek(), 1, 'Dec 31 2007 should be iso week 1');
+    assert.equal(moment([2008,  0,  1]).isoWeek(), 1, 'Jan  1 2008 should be iso week 1');
+    assert.equal(moment([2008,  0,  6]).isoWeek(), 1, 'Jan  6 2008 should be iso week 1');
+    assert.equal(moment([2008,  0,  7]).isoWeek(), 2, 'Jan  7 2008 should be iso week 2');
+    assert.equal(moment([2008,  0, 13]).isoWeek(), 2, 'Jan 13 2008 should be iso week 2');
+    assert.equal(moment([2008,  0, 14]).isoWeek(), 3, 'Jan 14 2008 should be iso week 3');
+});
+
+test('iso weeks year starting wednesday', function (assert) {
+    assert.equal(moment([2002, 11, 30]).isoWeek(), 1, 'Dec 30 2002 should be iso week 1');
+    assert.equal(moment([2003,  0,  1]).isoWeek(), 1, 'Jan  1 2003 should be iso week 1');
+    assert.equal(moment([2003,  0,  5]).isoWeek(), 1, 'Jan  5 2003 should be iso week 1');
+    assert.equal(moment([2003,  0,  6]).isoWeek(), 2, 'Jan  6 2003 should be iso week 2');
+    assert.equal(moment([2003,  0, 12]).isoWeek(), 2, 'Jan 12 2003 should be iso week 2');
+    assert.equal(moment([2003,  0, 13]).isoWeek(), 3, 'Jan 13 2003 should be iso week 3');
+});
+
+test('iso weeks year starting thursday', function (assert) {
+    assert.equal(moment([2008, 11, 29]).isoWeek(), 1, 'Dec 29 2008 should be iso week 1');
+    assert.equal(moment([2009,  0,  1]).isoWeek(), 1, 'Jan  1 2009 should be iso week 1');
+    assert.equal(moment([2009,  0,  4]).isoWeek(), 1, 'Jan  4 2009 should be iso week 1');
+    assert.equal(moment([2009,  0,  5]).isoWeek(), 2, 'Jan  5 2009 should be iso week 2');
+    assert.equal(moment([2009,  0, 11]).isoWeek(), 2, 'Jan 11 2009 should be iso week 2');
+    assert.equal(moment([2009,  0, 13]).isoWeek(), 3, 'Jan 12 2009 should be iso week 3');
+});
+
+test('iso weeks year starting friday', function (assert) {
+    assert.equal(moment([2009, 11, 28]).isoWeek(), 53, 'Dec 28 2009 should be iso week 53');
+    assert.equal(moment([2010,  0,  1]).isoWeek(), 53, 'Jan  1 2010 should be iso week 53');
+    assert.equal(moment([2010,  0,  3]).isoWeek(), 53, 'Jan  3 2010 should be iso week 53');
+    assert.equal(moment([2010,  0,  4]).isoWeek(),  1, 'Jan  4 2010 should be iso week 1');
+    assert.equal(moment([2010,  0, 10]).isoWeek(),  1, 'Jan 10 2010 should be iso week 1');
+    assert.equal(moment([2010,  0, 11]).isoWeek(),  2, 'Jan 11 2010 should be iso week 2');
+});
+
+test('iso weeks year starting saturday', function (assert) {
+    assert.equal(moment([2010, 11, 27]).isoWeek(), 52, 'Dec 27 2010 should be iso week 52');
+    assert.equal(moment([2011,  0,  1]).isoWeek(), 52, 'Jan  1 2011 should be iso week 52');
+    assert.equal(moment([2011,  0,  2]).isoWeek(), 52, 'Jan  2 2011 should be iso week 52');
+    assert.equal(moment([2011,  0,  3]).isoWeek(),  1, 'Jan  3 2011 should be iso week 1');
+    assert.equal(moment([2011,  0,  9]).isoWeek(),  1, 'Jan  9 2011 should be iso week 1');
+    assert.equal(moment([2011,  0, 10]).isoWeek(),  2, 'Jan 10 2011 should be iso week 2');
+});
+
+test('iso weeks year starting sunday formatted', function (assert) {
+    assert.equal(moment([2012, 0,  1]).format('W WW Wo'), '52 52 52nd', 'Jan  1 2012 should be iso week 52');
+    assert.equal(moment([2012, 0,  2]).format('W WW Wo'),   '1 01 1st', 'Jan  2 2012 should be iso week 1');
+    assert.equal(moment([2012, 0,  8]).format('W WW Wo'),   '1 01 1st', 'Jan  8 2012 should be iso week 1');
+    assert.equal(moment([2012, 0,  9]).format('W WW Wo'),   '2 02 2nd', 'Jan  9 2012 should be iso week 2');
+    assert.equal(moment([2012, 0, 15]).format('W WW Wo'),   '2 02 2nd', 'Jan 15 2012 should be iso week 2');
+});
+
+test('weeks plural year starting sunday', function (assert) {
+    assert.equal(moment([2012, 0,  1]).weeks(), 1, 'Jan  1 2012 should be week 1');
+    assert.equal(moment([2012, 0,  7]).weeks(), 1, 'Jan  7 2012 should be week 1');
+    assert.equal(moment([2012, 0,  8]).weeks(), 2, 'Jan  8 2012 should be week 2');
+    assert.equal(moment([2012, 0, 14]).weeks(), 2, 'Jan 14 2012 should be week 2');
+    assert.equal(moment([2012, 0, 15]).weeks(), 3, 'Jan 15 2012 should be week 3');
+});
+
+test('iso weeks plural year starting sunday', function (assert) {
+    assert.equal(moment([2012, 0, 1]).isoWeeks(), 52, 'Jan  1 2012 should be iso week 52');
+    assert.equal(moment([2012, 0, 2]).isoWeeks(),  1, 'Jan  2 2012 should be iso week 1');
+    assert.equal(moment([2012, 0, 8]).isoWeeks(),  1, 'Jan  8 2012 should be iso week 1');
+    assert.equal(moment([2012, 0, 9]).isoWeeks(),  2, 'Jan  9 2012 should be iso week 2');
+    assert.equal(moment([2012, 0, 15]).isoWeeks(), 2, 'Jan 15 2012 should be iso week 2');
+});
+
+test('weeks setter', function (assert) {
+    assert.equal(moment([2012, 0,  1]).week(30).week(), 30, 'Setting Jan 1 2012 to week 30 should work');
+    assert.equal(moment([2012, 0,  7]).week(30).week(), 30, 'Setting Jan 7 2012 to week 30 should work');
+    assert.equal(moment([2012, 0,  8]).week(30).week(), 30, 'Setting Jan 8 2012 to week 30 should work');
+    assert.equal(moment([2012, 0, 14]).week(30).week(), 30, 'Setting Jan 14 2012 to week 30 should work');
+    assert.equal(moment([2012, 0, 15]).week(30).week(), 30, 'Setting Jan 15 2012 to week 30 should work');
+});
+
+test('iso weeks setter', function (assert) {
+    assert.equal(moment([2012, 0,  1]).isoWeeks(25).isoWeeks(), 25, 'Setting Jan  1 2012 to week 25 should work');
+    assert.equal(moment([2012, 0,  2]).isoWeeks(24).isoWeeks(), 24, 'Setting Jan  2 2012 to week 24 should work');
+    assert.equal(moment([2012, 0,  8]).isoWeeks(23).isoWeeks(), 23, 'Setting Jan  8 2012 to week 23 should work');
+    assert.equal(moment([2012, 0,  9]).isoWeeks(22).isoWeeks(), 22, 'Setting Jan  9 2012 to week 22 should work');
+    assert.equal(moment([2012, 0, 15]).isoWeeks(21).isoWeeks(), 21, 'Setting Jan 15 2012 to week 21 should work');
+});
+
+test('iso weeks setter day of year', function (assert) {
+    assert.equal(moment([2012, 0,  1]).isoWeek(1).dayOfYear(), 9, 'Setting Jan  1 2012 to week 1 should be day of year 8');
+    assert.equal(moment([2012, 0,  1]).isoWeek(1).year(),   2011, 'Setting Jan  1 2012 to week 1 should be year 2011');
+    assert.equal(moment([2012, 0,  2]).isoWeek(1).dayOfYear(), 2, 'Setting Jan  2 2012 to week 1 should be day of year 2');
+    assert.equal(moment([2012, 0,  8]).isoWeek(1).dayOfYear(), 8, 'Setting Jan  8 2012 to week 1 should be day of year 8');
+    assert.equal(moment([2012, 0,  9]).isoWeek(1).dayOfYear(), 2, 'Setting Jan  9 2012 to week 1 should be day of year 2');
+    assert.equal(moment([2012, 0, 15]).isoWeek(1).dayOfYear(), 8, 'Setting Jan 15 2012 to week 1 should be day of year 8');
+});
+
+test('years with iso week 53', function (assert) {
+    // Based on a table taken from http://en.wikipedia.org/wiki/ISO_week_date
+    // (as downloaded on 2014-01-06) listing the 71 years in a 400-year cycle
+    // that have 53 weeks; in this case reflecting the 2000 based cycle
+    assert.equal(moment([2004, 11, 31]).isoWeek(), 53, 'Dec 31 2004 should be iso week 53');
+    assert.equal(moment([2009, 11, 31]).isoWeek(), 53, 'Dec 31 2009 should be iso week 53');
+    assert.equal(moment([2015, 11, 31]).isoWeek(), 53, 'Dec 31 2015 should be iso week 53');
+    assert.equal(moment([2020, 11, 31]).isoWeek(), 53, 'Dec 31 2020 should be iso week 53');
+    assert.equal(moment([2026, 11, 31]).isoWeek(), 53, 'Dec 31 2026 should be iso week 53');
+    assert.equal(moment([2032, 11, 31]).isoWeek(), 53, 'Dec 31 2032 should be iso week 53');
+    assert.equal(moment([2037, 11, 31]).isoWeek(), 53, 'Dec 31 2037 should be iso week 53');
+    assert.equal(moment([2043, 11, 31]).isoWeek(), 53, 'Dec 31 2043 should be iso week 53');
+    assert.equal(moment([2048, 11, 31]).isoWeek(), 53, 'Dec 31 2048 should be iso week 53');
+    assert.equal(moment([2054, 11, 31]).isoWeek(), 53, 'Dec 31 2054 should be iso week 53');
+    assert.equal(moment([2060, 11, 31]).isoWeek(), 53, 'Dec 31 2060 should be iso week 53');
+    assert.equal(moment([2065, 11, 31]).isoWeek(), 53, 'Dec 31 2065 should be iso week 53');
+    assert.equal(moment([2071, 11, 31]).isoWeek(), 53, 'Dec 31 2071 should be iso week 53');
+    assert.equal(moment([2076, 11, 31]).isoWeek(), 53, 'Dec 31 2076 should be iso week 53');
+    assert.equal(moment([2082, 11, 31]).isoWeek(), 53, 'Dec 31 2082 should be iso week 53');
+    assert.equal(moment([2088, 11, 31]).isoWeek(), 53, 'Dec 31 2088 should be iso week 53');
+    assert.equal(moment([2093, 11, 31]).isoWeek(), 53, 'Dec 31 2093 should be iso week 53');
+    assert.equal(moment([2099, 11, 31]).isoWeek(), 53, 'Dec 31 2099 should be iso week 53');
+    assert.equal(moment([2105, 11, 31]).isoWeek(), 53, 'Dec 31 2105 should be iso week 53');
+    assert.equal(moment([2111, 11, 31]).isoWeek(), 53, 'Dec 31 2111 should be iso week 53');
+    assert.equal(moment([2116, 11, 31]).isoWeek(), 53, 'Dec 31 2116 should be iso week 53');
+    assert.equal(moment([2122, 11, 31]).isoWeek(), 53, 'Dec 31 2122 should be iso week 53');
+    assert.equal(moment([2128, 11, 31]).isoWeek(), 53, 'Dec 31 2128 should be iso week 53');
+    assert.equal(moment([2133, 11, 31]).isoWeek(), 53, 'Dec 31 2133 should be iso week 53');
+    assert.equal(moment([2139, 11, 31]).isoWeek(), 53, 'Dec 31 2139 should be iso week 53');
+    assert.equal(moment([2144, 11, 31]).isoWeek(), 53, 'Dec 31 2144 should be iso week 53');
+    assert.equal(moment([2150, 11, 31]).isoWeek(), 53, 'Dec 31 2150 should be iso week 53');
+    assert.equal(moment([2156, 11, 31]).isoWeek(), 53, 'Dec 31 2156 should be iso week 53');
+    assert.equal(moment([2161, 11, 31]).isoWeek(), 53, 'Dec 31 2161 should be iso week 53');
+    assert.equal(moment([2167, 11, 31]).isoWeek(), 53, 'Dec 31 2167 should be iso week 53');
+    assert.equal(moment([2172, 11, 31]).isoWeek(), 53, 'Dec 31 2172 should be iso week 53');
+    assert.equal(moment([2178, 11, 31]).isoWeek(), 53, 'Dec 31 2178 should be iso week 53');
+    assert.equal(moment([2184, 11, 31]).isoWeek(), 53, 'Dec 31 2184 should be iso week 53');
+    assert.equal(moment([2189, 11, 31]).isoWeek(), 53, 'Dec 31 2189 should be iso week 53');
+    assert.equal(moment([2195, 11, 31]).isoWeek(), 53, 'Dec 31 2195 should be iso week 53');
+    assert.equal(moment([2201, 11, 31]).isoWeek(), 53, 'Dec 31 2201 should be iso week 53');
+    assert.equal(moment([2207, 11, 31]).isoWeek(), 53, 'Dec 31 2207 should be iso week 53');
+    assert.equal(moment([2212, 11, 31]).isoWeek(), 53, 'Dec 31 2212 should be iso week 53');
+    assert.equal(moment([2218, 11, 31]).isoWeek(), 53, 'Dec 31 2218 should be iso week 53');
+    assert.equal(moment([2224, 11, 31]).isoWeek(), 53, 'Dec 31 2224 should be iso week 53');
+    assert.equal(moment([2229, 11, 31]).isoWeek(), 53, 'Dec 31 2229 should be iso week 53');
+    assert.equal(moment([2235, 11, 31]).isoWeek(), 53, 'Dec 31 2235 should be iso week 53');
+    assert.equal(moment([2240, 11, 31]).isoWeek(), 53, 'Dec 31 2240 should be iso week 53');
+    assert.equal(moment([2246, 11, 31]).isoWeek(), 53, 'Dec 31 2246 should be iso week 53');
+    assert.equal(moment([2252, 11, 31]).isoWeek(), 53, 'Dec 31 2252 should be iso week 53');
+    assert.equal(moment([2257, 11, 31]).isoWeek(), 53, 'Dec 31 2257 should be iso week 53');
+    assert.equal(moment([2263, 11, 31]).isoWeek(), 53, 'Dec 31 2263 should be iso week 53');
+    assert.equal(moment([2268, 11, 31]).isoWeek(), 53, 'Dec 31 2268 should be iso week 53');
+    assert.equal(moment([2274, 11, 31]).isoWeek(), 53, 'Dec 31 2274 should be iso week 53');
+    assert.equal(moment([2280, 11, 31]).isoWeek(), 53, 'Dec 31 2280 should be iso week 53');
+    assert.equal(moment([2285, 11, 31]).isoWeek(), 53, 'Dec 31 2285 should be iso week 53');
+    assert.equal(moment([2291, 11, 31]).isoWeek(), 53, 'Dec 31 2291 should be iso week 53');
+    assert.equal(moment([2296, 11, 31]).isoWeek(), 53, 'Dec 31 2296 should be iso week 53');
+    assert.equal(moment([2303, 11, 31]).isoWeek(), 53, 'Dec 31 2303 should be iso week 53');
+    assert.equal(moment([2308, 11, 31]).isoWeek(), 53, 'Dec 31 2308 should be iso week 53');
+    assert.equal(moment([2314, 11, 31]).isoWeek(), 53, 'Dec 31 2314 should be iso week 53');
+    assert.equal(moment([2320, 11, 31]).isoWeek(), 53, 'Dec 31 2320 should be iso week 53');
+    assert.equal(moment([2325, 11, 31]).isoWeek(), 53, 'Dec 31 2325 should be iso week 53');
+    assert.equal(moment([2331, 11, 31]).isoWeek(), 53, 'Dec 31 2331 should be iso week 53');
+    assert.equal(moment([2336, 11, 31]).isoWeek(), 53, 'Dec 31 2336 should be iso week 53');
+    assert.equal(moment([2342, 11, 31]).isoWeek(), 53, 'Dec 31 2342 should be iso week 53');
+    assert.equal(moment([2348, 11, 31]).isoWeek(), 53, 'Dec 31 2348 should be iso week 53');
+    assert.equal(moment([2353, 11, 31]).isoWeek(), 53, 'Dec 31 2353 should be iso week 53');
+    assert.equal(moment([2359, 11, 31]).isoWeek(), 53, 'Dec 31 2359 should be iso week 53');
+    assert.equal(moment([2364, 11, 31]).isoWeek(), 53, 'Dec 31 2364 should be iso week 53');
+    assert.equal(moment([2370, 11, 31]).isoWeek(), 53, 'Dec 31 2370 should be iso week 53');
+    assert.equal(moment([2376, 11, 31]).isoWeek(), 53, 'Dec 31 2376 should be iso week 53');
+    assert.equal(moment([2381, 11, 31]).isoWeek(), 53, 'Dec 31 2381 should be iso week 53');
+    assert.equal(moment([2387, 11, 31]).isoWeek(), 53, 'Dec 31 2387 should be iso week 53');
+    assert.equal(moment([2392, 11, 31]).isoWeek(), 53, 'Dec 31 2392 should be iso week 53');
+    assert.equal(moment([2398, 11, 31]).isoWeek(), 53, 'Dec 31 2398 should be iso week 53');
+});
+
+test('count years with iso week 53', function (assert) {
+    // Based on http://en.wikipedia.org/wiki/ISO_week_date (as seen on 2014-01-06)
+    // stating that there are 71 years in a 400-year cycle that have 53 weeks;
+    // in this case reflecting the 2000 based cycle
+    var count = 0, i;
+    for (i = 0; i < 400; i++) {
+        count += (moment([2000 + i, 11, 31]).isoWeek() === 53) ? 1 : 0;
+    }
+    assert.equal(count, 71, 'Should have 71 years in 400-year cycle with iso week 53');
+});
+
+})));
+
+
+;(function (global, factory) {
+   typeof exports === 'object' && typeof module !== 'undefined'
+       && typeof require === 'function' ? factory(require('../../moment')) :
+   typeof define === 'function' && define.amd ? define(['../../moment'], factory) :
+   factory(global.moment)
+}(this, (function (moment) { 'use strict';
+
+function each(array, callback) {
+    var i;
+    for (i = 0; i < array.length; i++) {
+        callback(array[i], i, array);
+    }
+}
+
+function objectKeys(obj) {
+    if (Object.keys) {
+        return Object.keys(obj);
+    } else {
+        // IE8
+        var res = [], i;
+        for (i in obj) {
+            if (obj.hasOwnProperty(i)) {
+                res.push(i);
+            }
+        }
+        return res;
+    }
+}
+
+// Pick the first defined of two or three arguments.
+
+function defineCommonLocaleTests(locale, options) {
+    test('lenient ordinal parsing', function (assert) {
+        var i, ordinalStr, testMoment;
+        for (i = 1; i <= 31; ++i) {
+            ordinalStr = moment([2014, 0, i]).format('YYYY MM Do');
+            testMoment = moment(ordinalStr, 'YYYY MM Do');
+            assert.equal(testMoment.year(), 2014,
+                    'lenient ordinal parsing ' + i + ' year check');
+            assert.equal(testMoment.month(), 0,
+                    'lenient ordinal parsing ' + i + ' month check');
+            assert.equal(testMoment.date(), i,
+                    'lenient ordinal parsing ' + i + ' date check');
+        }
+    });
+
+    test('lenient ordinal parsing of number', function (assert) {
+        var i, testMoment;
+        for (i = 1; i <= 31; ++i) {
+            testMoment = moment('2014 01 ' + i, 'YYYY MM Do');
+            assert.equal(testMoment.year(), 2014,
+                    'lenient ordinal parsing of number ' + i + ' year check');
+            assert.equal(testMoment.month(), 0,
+                    'lenient ordinal parsing of number ' + i + ' month check');
+            assert.equal(testMoment.date(), i,
+                    'lenient ordinal parsing of number ' + i + ' date check');
+        }
+    });
+
+    test('strict ordinal parsing', function (assert) {
+        var i, ordinalStr, testMoment;
+        for (i = 1; i <= 31; ++i) {
+            ordinalStr = moment([2014, 0, i]).format('YYYY MM Do');
+            testMoment = moment(ordinalStr, 'YYYY MM Do', true);
+            assert.ok(testMoment.isValid(), 'strict ordinal parsing ' + i);
+        }
+    });
+
+    test('meridiem invariant', function (assert) {
+        var h, m, t1, t2;
+        for (h = 0; h < 24; ++h) {
+            for (m = 0; m < 60; m += 15) {
+                t1 = moment.utc([2000, 0, 1, h, m]);
+                t2 = moment.utc(t1.format('A h:mm'), 'A h:mm');
+                assert.equal(t2.format('HH:mm'), t1.format('HH:mm'),
+                        'meridiem at ' + t1.format('HH:mm'));
+            }
+        }
+    });
+
+    test('date format correctness', function (assert) {
+        var data, tokens;
+        data = moment.localeData()._longDateFormat;
+        tokens = objectKeys(data);
+        each(tokens, function (srchToken) {
+            // Check each format string to make sure it does not contain any
+            // tokens that need to be expanded.
+            each(tokens, function (baseToken) {
+                // strip escaped sequences
+                var format = data[baseToken].replace(/(\[[^\]]*\])/g, '');
+                assert.equal(false, !!~format.indexOf(srchToken),
+                        'contains ' + srchToken + ' in ' + baseToken);
+            });
+        });
+    });
+
+    test('month parsing correctness', function (assert) {
+        var i, m;
+
+        if (locale === 'tr') {
+            // I can't fix it :(
+            expect(0);
+            return;
+        }
+        function tester(format) {
+            var r;
+            r = moment(m.format(format), format);
+            assert.equal(r.month(), m.month(), 'month ' + i + ' fmt ' + format);
+            r = moment(m.format(format).toLocaleUpperCase(), format);
+            assert.equal(r.month(), m.month(), 'month ' + i + ' fmt ' + format + ' upper');
+            r = moment(m.format(format).toLocaleLowerCase(), format);
+            assert.equal(r.month(), m.month(), 'month ' + i + ' fmt ' + format + ' lower');
+
+            r = moment(m.format(format), format, true);
+            assert.equal(r.month(), m.month(), 'month ' + i + ' fmt ' + format + ' strict');
+            r = moment(m.format(format).toLocaleUpperCase(), format, true);
+            assert.equal(r.month(), m.month(), 'month ' + i + ' fmt ' + format + ' upper strict');
+            r = moment(m.format(format).toLocaleLowerCase(), format, true);
+            assert.equal(r.month(), m.month(), 'month ' + i + ' fmt ' + format + ' lower strict');
+        }
+
+        for (i = 0; i < 12; ++i) {
+            m = moment([2015, i, 15, 18]);
+            tester('MMM');
+            tester('MMM.');
+            tester('MMMM');
+            tester('MMMM.');
+        }
+    });
+
+    test('weekday parsing correctness', function (assert) {
+        var i, m;
+
+        if (locale === 'tr' || locale === 'az' || locale === 'ro') {
+            // tr, az: There is a lower-case letter (ı), that converted to
+            // upper then lower changes to i
+            // ro: there is the letter ț which behaves weird under IE8
+            expect(0);
+            return;
+        }
+        function tester(format) {
+            var r, baseMsg = 'weekday ' + m.weekday() + ' fmt ' + format + ' ' + m.toISOString();
+            r = moment(m.format(format), format);
+            assert.equal(r.weekday(), m.weekday(), baseMsg);
+            r = moment(m.format(format).toLocaleUpperCase(), format);
+            assert.equal(r.weekday(), m.weekday(), baseMsg + ' upper');
+            r = moment(m.format(format).toLocaleLowerCase(), format);
+            assert.equal(r.weekday(), m.weekday(), baseMsg + ' lower');
+
+            r = moment(m.format(format), format, true);
+            assert.equal(r.weekday(), m.weekday(), baseMsg + ' strict');
+            r = moment(m.format(format).toLocaleUpperCase(), format, true);
+            assert.equal(r.weekday(), m.weekday(), baseMsg + ' upper strict');
+            r = moment(m.format(format).toLocaleLowerCase(), format, true);
+            assert.equal(r.weekday(), m.weekday(), baseMsg + ' lower strict');
+        }
+
+        for (i = 0; i < 7; ++i) {
+            m = moment.utc([2015, 0, i + 1, 18]);
+            tester('dd');
+            tester('ddd');
+            tester('dddd');
+        }
+    });
+}
+
+function setupDeprecationHandler(test, moment$$1, scope) {
+    test._expectedDeprecations = null;
+    test._observedDeprecations = null;
+    test._oldSupress = moment$$1.suppressDeprecationWarnings;
+    moment$$1.suppressDeprecationWarnings = true;
+    test.expectedDeprecations = function () {
+        test._expectedDeprecations = arguments;
+        test._observedDeprecations = [];
+    };
+    moment$$1.deprecationHandler = function (name, msg) {
+        var deprecationId = matchedDeprecation(name, msg, test._expectedDeprecations);
+        if (deprecationId === -1) {
+            throw new Error('Unexpected deprecation thrown name=' +
+                    name + ' msg=' + msg);
+        }
+        test._observedDeprecations[deprecationId] = 1;
+    };
+}
+
+function teardownDeprecationHandler(test, moment$$1, scope) {
+    moment$$1.suppressDeprecationWarnings = test._oldSupress;
+
+    if (test._expectedDeprecations != null) {
+        var missedDeprecations = [];
+        each(test._expectedDeprecations, function (deprecationPattern, id) {
+            if (test._observedDeprecations[id] !== 1) {
+                missedDeprecations.push(deprecationPattern);
+            }
+        });
+        if (missedDeprecations.length !== 0) {
+            throw new Error('Expected deprecation warnings did not happen: ' +
+                    missedDeprecations.join(' '));
+        }
+    }
+}
+
+function matchedDeprecation(name, msg, deprecations) {
+    if (deprecations == null) {
+        return -1;
+    }
+    for (var i = 0; i < deprecations.length; ++i) {
+        if (name != null && name === deprecations[i]) {
+            return i;
+        }
+        if (msg != null && msg.substring(0, deprecations[i].length) === deprecations[i]) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+/*global QUnit:false*/
+
+var test = QUnit.test;
+
+var expect = QUnit.expect;
+
+function module$1 (name, lifecycle) {
+    QUnit.module(name, {
+        setup : function () {
+            moment.locale('en');
+            moment.createFromInputFallback = function (config) {
+                throw new Error('input not handled by moment: ' + config._i);
+            };
+            setupDeprecationHandler(test, moment, 'core');
+            if (lifecycle && lifecycle.setup) {
+                lifecycle.setup();
+            }
+        },
+        teardown : function () {
+            teardownDeprecationHandler(test, moment, 'core');
+            if (lifecycle && lifecycle.teardown) {
+                lifecycle.teardown();
+            }
+        }
+    });
+}
+
+module$1('weeks in year');
+
+test('isoWeeksInYear', function (assert) {
+    assert.equal(moment([2004]).isoWeeksInYear(), 53, '2004 has 53 iso weeks');
+    assert.equal(moment([2005]).isoWeeksInYear(), 52, '2005 has 53 iso weeks');
+    assert.equal(moment([2006]).isoWeeksInYear(), 52, '2006 has 53 iso weeks');
+    assert.equal(moment([2007]).isoWeeksInYear(), 52, '2007 has 52 iso weeks');
+    assert.equal(moment([2008]).isoWeeksInYear(), 52, '2008 has 53 iso weeks');
+    assert.equal(moment([2009]).isoWeeksInYear(), 53, '2009 has 53 iso weeks');
+    assert.equal(moment([2010]).isoWeeksInYear(), 52, '2010 has 52 iso weeks');
+    assert.equal(moment([2011]).isoWeeksInYear(), 52, '2011 has 52 iso weeks');
+    assert.equal(moment([2012]).isoWeeksInYear(), 52, '2012 has 52 iso weeks');
+    assert.equal(moment([2013]).isoWeeksInYear(), 52, '2013 has 52 iso weeks');
+    assert.equal(moment([2014]).isoWeeksInYear(), 52, '2014 has 52 iso weeks');
+    assert.equal(moment([2015]).isoWeeksInYear(), 53, '2015 has 53 iso weeks');
+});
+
+test('weeksInYear doy/dow = 1/4', function (assert) {
+    moment.locale('1/4', {week: {dow: 1, doy: 4}});
+
+    assert.equal(moment([2004]).weeksInYear(), 53, '2004 has 53 weeks');
+    assert.equal(moment([2005]).weeksInYear(), 52, '2005 has 53 weeks');
+    assert.equal(moment([2006]).weeksInYear(), 52, '2006 has 53 weeks');
+    assert.equal(moment([2007]).weeksInYear(), 52, '2007 has 52 weeks');
+    assert.equal(moment([2008]).weeksInYear(), 52, '2008 has 53 weeks');
+    assert.equal(moment([2009]).weeksInYear(), 53, '2009 has 53 weeks');
+    assert.equal(moment([2010]).weeksInYear(), 52, '2010 has 52 weeks');
+    assert.equal(moment([2011]).weeksInYear(), 52, '2011 has 52 weeks');
+    assert.equal(moment([2012]).weeksInYear(), 52, '2012 has 52 weeks');
+    assert.equal(moment([2013]).weeksInYear(), 52, '2013 has 52 weeks');
+    assert.equal(moment([2014]).weeksInYear(), 52, '2014 has 52 weeks');
+    assert.equal(moment([2015]).weeksInYear(), 53, '2015 has 53 weeks');
+});
+
+test('weeksInYear doy/dow = 6/12', function (assert) {
+    moment.locale('6/12', {week: {dow: 6, doy: 12}});
+
+    assert.equal(moment([2004]).weeksInYear(), 53, '2004 has 53 weeks');
+    assert.equal(moment([2005]).weeksInYear(), 52, '2005 has 53 weeks');
+    assert.equal(moment([2006]).weeksInYear(), 52, '2006 has 53 weeks');
+    assert.equal(moment([2007]).weeksInYear(), 52, '2007 has 52 weeks');
+    assert.equal(moment([2008]).weeksInYear(), 52, '2008 has 53 weeks');
+    assert.equal(moment([2009]).weeksInYear(), 52, '2009 has 53 weeks');
+    assert.equal(moment([2010]).weeksInYear(), 53, '2010 has 52 weeks');
+    assert.equal(moment([2011]).weeksInYear(), 52, '2011 has 52 weeks');
+    assert.equal(moment([2012]).weeksInYear(), 52, '2012 has 52 weeks');
+    assert.equal(moment([2013]).weeksInYear(), 52, '2013 has 52 weeks');
+    assert.equal(moment([2014]).weeksInYear(), 52, '2014 has 52 weeks');
+    assert.equal(moment([2015]).weeksInYear(), 52, '2015 has 53 weeks');
+});
+
+test('weeksInYear doy/dow = 1/7', function (assert) {
+    moment.locale('1/7', {week: {dow: 1, doy: 7}});
+
+    assert.equal(moment([2004]).weeksInYear(), 52, '2004 has 53 weeks');
+    assert.equal(moment([2005]).weeksInYear(), 52, '2005 has 53 weeks');
+    assert.equal(moment([2006]).weeksInYear(), 53, '2006 has 53 weeks');
+    assert.equal(moment([2007]).weeksInYear(), 52, '2007 has 52 weeks');
+    assert.equal(moment([2008]).weeksInYear(), 52, '2008 has 53 weeks');
+    assert.equal(moment([2009]).weeksInYear(), 52, '2009 has 53 weeks');
+    assert.equal(moment([2010]).weeksInYear(), 52, '2010 has 52 weeks');
+    assert.equal(moment([2011]).weeksInYear(), 52, '2011 has 52 weeks');
+    assert.equal(moment([2012]).weeksInYear(), 53, '2012 has 52 weeks');
+    assert.equal(moment([2013]).weeksInYear(), 52, '2013 has 52 weeks');
+    assert.equal(moment([2014]).weeksInYear(), 52, '2014 has 52 weeks');
+    assert.equal(moment([2015]).weeksInYear(), 52, '2015 has 53 weeks');
+});
+
+test('weeksInYear doy/dow = 0/6', function (assert) {
+    moment.locale('0/6', {week: {dow: 0, doy: 6}});
+
+    assert.equal(moment([2004]).weeksInYear(), 52, '2004 has 53 weeks');
+    assert.equal(moment([2005]).weeksInYear(), 53, '2005 has 53 weeks');
+    assert.equal(moment([2006]).weeksInYear(), 52, '2006 has 53 weeks');
+    assert.equal(moment([2007]).weeksInYear(), 52, '2007 has 52 weeks');
+    assert.equal(moment([2008]).weeksInYear(), 52, '2008 has 53 weeks');
+    assert.equal(moment([2009]).weeksInYear(), 52, '2009 has 53 weeks');
+    assert.equal(moment([2010]).weeksInYear(), 52, '2010 has 52 weeks');
+    assert.equal(moment([2011]).weeksInYear(), 53, '2011 has 52 weeks');
+    assert.equal(moment([2012]).weeksInYear(), 52, '2012 has 52 weeks');
+    assert.equal(moment([2013]).weeksInYear(), 52, '2013 has 52 weeks');
+    assert.equal(moment([2014]).weeksInYear(), 52, '2014 has 52 weeks');
+    assert.equal(moment([2015]).weeksInYear(), 52, '2015 has 53 weeks');
+});
+
+})));
+
+
+;(function (global, factory) {
+   typeof exports === 'object' && typeof module !== 'undefined'
+       && typeof require === 'function' ? factory(require('../../moment')) :
+   typeof define === 'function' && define.amd ? define(['../../moment'], factory) :
+   factory(global.moment)
+}(this, (function (moment) { 'use strict';
+
+function each(array, callback) {
+    var i;
+    for (i = 0; i < array.length; i++) {
+        callback(array[i], i, array);
+    }
+}
+
+function objectKeys(obj) {
+    if (Object.keys) {
+        return Object.keys(obj);
+    } else {
+        // IE8
+        var res = [], i;
+        for (i in obj) {
+            if (obj.hasOwnProperty(i)) {
+                res.push(i);
+            }
+        }
+        return res;
+    }
+}
+
+// Pick the first defined of two or three arguments.
+
+function defineCommonLocaleTests(locale, options) {
+    test('lenient ordinal parsing', function (assert) {
+        var i, ordinalStr, testMoment;
+        for (i = 1; i <= 31; ++i) {
+            ordinalStr = moment([2014, 0, i]).format('YYYY MM Do');
+            testMoment = moment(ordinalStr, 'YYYY MM Do');
+            assert.equal(testMoment.year(), 2014,
+                    'lenient ordinal parsing ' + i + ' year check');
+            assert.equal(testMoment.month(), 0,
+                    'lenient ordinal parsing ' + i + ' month check');
+            assert.equal(testMoment.date(), i,
+                    'lenient ordinal parsing ' + i + ' date check');
+        }
+    });
+
+    test('lenient ordinal parsing of number', function (assert) {
+        var i, testMoment;
+        for (i = 1; i <= 31; ++i) {
+            testMoment = moment('2014 01 ' + i, 'YYYY MM Do');
+            assert.equal(testMoment.year(), 2014,
+                    'lenient ordinal parsing of number ' + i + ' year check');
+            assert.equal(testMoment.month(), 0,
+                    'lenient ordinal parsing of number ' + i + ' month check');
+            assert.equal(testMoment.date(), i,
+                    'lenient ordinal parsing of number ' + i + ' date check');
+        }
+    });
+
+    test('strict ordinal parsing', function (assert) {
+        var i, ordinalStr, testMoment;
+        for (i = 1; i <= 31; ++i) {
+            ordinalStr = moment([2014, 0, i]).format('YYYY MM Do');
+            testMoment = moment(ordinalStr, 'YYYY MM Do', true);
+            assert.ok(testMoment.isValid(), 'strict ordinal parsing ' + i);
+        }
+    });
+
+    test('meridiem invariant', function (assert) {
+        var h, m, t1, t2;
+        for (h = 0; h < 24; ++h) {
+            for (m = 0; m < 60; m += 15) {
+                t1 = moment.utc([2000, 0, 1, h, m]);
+                t2 = moment.utc(t1.format('A h:mm'), 'A h:mm');
+                assert.equal(t2.format('HH:mm'), t1.format('HH:mm'),
+                        'meridiem at ' + t1.format('HH:mm'));
+            }
+        }
+    });
+
+    test('date format correctness', function (assert) {
+        var data, tokens;
+        data = moment.localeData()._longDateFormat;
+        tokens = objectKeys(data);
+        each(tokens, function (srchToken) {
+            // Check each format string to make sure it does not contain any
+            // tokens that need to be expanded.
+            each(tokens, function (baseToken) {
+                // strip escaped sequences
+                var format = data[baseToken].replace(/(\[[^\]]*\])/g, '');
+                assert.equal(false, !!~format.indexOf(srchToken),
+                        'contains ' + srchToken + ' in ' + baseToken);
+            });
+        });
+    });
+
+    test('month parsing correctness', function (assert) {
+        var i, m;
+
+        if (locale === 'tr') {
+            // I can't fix it :(
+            expect(0);
+            return;
+        }
+        function tester(format) {
+            var r;
+            r = moment(m.format(format), format);
+            assert.equal(r.month(), m.month(), 'month ' + i + ' fmt ' + format);
+            r = moment(m.format(format).toLocaleUpperCase(), format);
+            assert.equal(r.month(), m.month(), 'month ' + i + ' fmt ' + format + ' upper');
+            r = moment(m.format(format).toLocaleLowerCase(), format);
+            assert.equal(r.month(), m.month(), 'month ' + i + ' fmt ' + format + ' lower');
+
+            r = moment(m.format(format), format, true);
+            assert.equal(r.month(), m.month(), 'month ' + i + ' fmt ' + format + ' strict');
+            r = moment(m.format(format).toLocaleUpperCase(), format, true);
+            assert.equal(r.month(), m.month(), 'month ' + i + ' fmt ' + format + ' upper strict');
+            r = moment(m.format(format).toLocaleLowerCase(), format, true);
+            assert.equal(r.month(), m.month(), 'month ' + i + ' fmt ' + format + ' lower strict');
+        }
+
+        for (i = 0; i < 12; ++i) {
+            m = moment([2015, i, 15, 18]);
+            tester('MMM');
+            tester('MMM.');
+            tester('MMMM');
+            tester('MMMM.');
+        }
+    });
+
+    test('weekday parsing correctness', function (assert) {
+        var i, m;
+
+        if (locale === 'tr' || locale === 'az' || locale === 'ro') {
+            // tr, az: There is a lower-case letter (ı), that converted to
+            // upper then lower changes to i
+            // ro: there is the letter ț which behaves weird under IE8
+            expect(0);
+            return;
+        }
+        function tester(format) {
+            var r, baseMsg = 'weekday ' + m.weekday() + ' fmt ' + format + ' ' + m.toISOString();
+            r = moment(m.format(format), format);
+            assert.equal(r.weekday(), m.weekday(), baseMsg);
+            r = moment(m.format(format).toLocaleUpperCase(), format);
+            assert.equal(r.weekday(), m.weekday(), baseMsg + ' upper');
+            r = moment(m.format(format).toLocaleLowerCase(), format);
+            assert.equal(r.weekday(), m.weekday(), baseMsg + ' lower');
+
+            r = moment(m.format(format), format, true);
+            assert.equal(r.weekday(), m.weekday(), baseMsg + ' strict');
+            r = moment(m.format(format).toLocaleUpperCase(), format, true);
+            assert.equal(r.weekday(), m.weekday(), baseMsg + ' upper strict');
+            r = moment(m.format(format).toLocaleLowerCase(), format, true);
+            assert.equal(r.weekday(), m.weekday(), baseMsg + ' lower strict');
+        }
+
+        for (i = 0; i < 7; ++i) {
+            m = moment.utc([2015, 0, i + 1, 18]);
+            tester('dd');
+            tester('ddd');
+            tester('dddd');
+        }
+    });
+}
+
+function setupDeprecationHandler(test, moment$$1, scope) {
+    test._expectedDeprecations = null;
+    test._observedDeprecations = null;
+    test._oldSupress = moment$$1.suppressDeprecationWarnings;
+    moment$$1.suppressDeprecationWarnings = true;
+    test.expectedDeprecations = function () {
+        test._expectedDeprecations = arguments;
+        test._observedDeprecations = [];
+    };
+    moment$$1.deprecationHandler = function (name, msg) {
+        var deprecationId = matchedDeprecation(name, msg, test._expectedDeprecations);
+        if (deprecationId === -1) {
+            throw new Error('Unexpected deprecation thrown name=' +
+                    name + ' msg=' + msg);
+        }
+        test._observedDeprecations[deprecationId] = 1;
+    };
+}
+
+function teardownDeprecationHandler(test, moment$$1, scope) {
+    moment$$1.suppressDeprecationWarnings = test._oldSupress;
+
+    if (test._expectedDeprecations != null) {
+        var missedDeprecations = [];
+        each(test._expectedDeprecations, function (deprecationPattern, id) {
+            if (test._observedDeprecations[id] !== 1) {
+                missedDeprecations.push(deprecationPattern);
+            }
+        });
+        if (missedDeprecations.length !== 0) {
+            throw new Error('Expected deprecation warnings did not happen: ' +
+                    missedDeprecations.join(' '));
+        }
+    }
+}
+
+function matchedDeprecation(name, msg, deprecations) {
+    if (deprecations == null) {
+        return -1;
+    }
+    for (var i = 0; i < deprecations.length; ++i) {
+        if (name != null && name === deprecations[i]) {
+            return i;
+        }
+        if (msg != null && msg.substring(0, deprecations[i].length) === deprecations[i]) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+/*global QUnit:false*/
+
+var test = QUnit.test;
+
+var expect = QUnit.expect;
+
+function module$1 (name, lifecycle) {
+    QUnit.module(name, {
+        setup : function () {
+            moment.locale('en');
+            moment.createFromInputFallback = function (config) {
+                throw new Error('input not handled by moment: ' + config._i);
+            };
+            setupDeprecationHandler(test, moment, 'core');
+            if (lifecycle && lifecycle.setup) {
+                lifecycle.setup();
+            }
+        },
+        teardown : function () {
+            teardownDeprecationHandler(test, moment, 'core');
+            if (lifecycle && lifecycle.teardown) {
+                lifecycle.teardown();
+            }
+        }
+    });
+}
+
+function isNearSpringDST() {
+    return moment().subtract(1, 'day').utcOffset() !== moment().add(1, 'day').utcOffset();
+}
+
+module$1('zone switching');
+
+test('local to utc, keepLocalTime = true', function (assert) {
+    var m = moment(),
+        fmt = 'YYYY-DD-MM HH:mm:ss';
+    assert.equal(m.clone().utc(true).format(fmt), m.format(fmt), 'local to utc failed to keep local time');
+});
+
+test('local to utc, keepLocalTime = false', function (assert) {
+    var m = moment();
+    assert.equal(m.clone().utc().valueOf(), m.valueOf(), 'local to utc failed to keep utc time (implicit)');
+    assert.equal(m.clone().utc(false).valueOf(), m.valueOf(), 'local to utc failed to keep utc time (explicit)');
+});
+
+test('local to zone, keepLocalTime = true', function (assert) {
+    test.expectedDeprecations('moment().zone');
+    var m = moment(),
+        fmt = 'YYYY-DD-MM HH:mm:ss',
+        z;
+
+    // Apparently there is -12:00 and +14:00
+    // http://en.wikipedia.org/wiki/UTC+14:00
+    // http://en.wikipedia.org/wiki/UTC-12:00
+    for (z = -12; z <= 14; ++z) {
+        assert.equal(m.clone().zone(z * 60, true).format(fmt), m.format(fmt),
+                'local to zone(' + z + ':00) failed to keep local time');
+    }
+});
+
+test('local to zone, keepLocalTime = false', function (assert) {
+    test.expectedDeprecations('moment().zone');
+    var m = moment(),
+        z;
+
+    // Apparently there is -12:00 and +14:00
+    // http://en.wikipedia.org/wiki/UTC+14:00
+    // http://en.wikipedia.org/wiki/UTC-12:00
+    for (z = -12; z <= 14; ++z) {
+        assert.equal(m.clone().zone(z * 60).valueOf(), m.valueOf(),
+                'local to zone(' + z + ':00) failed to keep utc time (implicit)');
+        assert.equal(m.clone().zone(z * 60, false).valueOf(), m.valueOf(),
+                'local to zone(' + z + ':00) failed to keep utc time (explicit)');
+    }
+});
+
+test('utc to local, keepLocalTime = true', function (assert) {
+    // Don't test near the spring DST transition
+    if (isNearSpringDST()) {
+        expect(0);
+        return;
+    }
+
+    var um = moment.utc(),
+        fmt = 'YYYY-DD-MM HH:mm:ss';
+
+    assert.equal(um.clone().local(true).format(fmt), um.format(fmt), 'utc to local failed to keep local time');
+});
+
+test('utc to local, keepLocalTime = false', function (assert) {
+    var um = moment.utc();
+    assert.equal(um.clone().local().valueOf(), um.valueOf(), 'utc to local failed to keep utc time (implicit)');
+    assert.equal(um.clone().local(false).valueOf(), um.valueOf(), 'utc to local failed to keep utc time (explicit)');
+});
+
+test('zone to local, keepLocalTime = true', function (assert) {
+    // Don't test near the spring DST transition
+    if (isNearSpringDST()) {
+        expect(0);
+        return;
+    }
+
+    test.expectedDeprecations('moment().zone');
+
+    var m = moment(),
+        fmt = 'YYYY-DD-MM HH:mm:ss',
+        z;
+
+    // Apparently there is -12:00 and +14:00
+    // http://en.wikipedia.org/wiki/UTC+14:00
+    // http://en.wikipedia.org/wiki/UTC-12:00
+    for (z = -12; z <= 14; ++z) {
+        m.zone(z * 60);
+
+        assert.equal(m.clone().local(true).format(fmt), m.format(fmt),
+                'zone(' + z + ':00) to local failed to keep local time');
+    }
+});
+
+test('zone to local, keepLocalTime = false', function (assert) {
+    test.expectedDeprecations('moment().zone');
+    var m = moment(),
+        z;
+
+    // Apparently there is -12:00 and +14:00
+    // http://en.wikipedia.org/wiki/UTC+14:00
+    // http://en.wikipedia.org/wiki/UTC-12:00
+    for (z = -12; z <= 14; ++z) {
+        m.zone(z * 60);
+
+        assert.equal(m.clone().local(false).valueOf(), m.valueOf(),
+                'zone(' + z + ':00) to local failed to keep utc time (explicit)');
+        assert.equal(m.clone().local().valueOf(), m.valueOf(),
+                'zone(' + z + ':00) to local failed to keep utc time (implicit)');
+    }
+});
+
+})));
+
+
+;(function (global, factory) {
+   typeof exports === 'object' && typeof module !== 'undefined'
+       && typeof require === 'function' ? factory(require('../../moment')) :
+   typeof define === 'function' && define.amd ? define(['../../moment'], factory) :
+   factory(global.moment)
+}(this, (function (moment) { 'use strict';
+
+function each(array, callback) {
+    var i;
+    for (i = 0; i < array.length; i++) {
+        callback(array[i], i, array);
+    }
+}
+
+function objectKeys(obj) {
+    if (Object.keys) {
+        return Object.keys(obj);
+    } else {
+        // IE8
+        var res = [], i;
+        for (i in obj) {
+            if (obj.hasOwnProperty(i)) {
+                res.push(i);
+            }
+        }
+        return res;
+    }
+}
+
+// Pick the first defined of two or three arguments.
+
+function defineCommonLocaleTests(locale, options) {
+    test('lenient ordinal parsing', function (assert) {
+        var i, ordinalStr, testMoment;
+        for (i = 1; i <= 31; ++i) {
+            ordinalStr = moment([2014, 0, i]).format('YYYY MM Do');
+            testMoment = moment(ordinalStr, 'YYYY MM Do');
+            assert.equal(testMoment.year(), 2014,
+                    'lenient ordinal parsing ' + i + ' year check');
+            assert.equal(testMoment.month(), 0,
+                    'lenient ordinal parsing ' + i + ' month check');
+            assert.equal(testMoment.date(), i,
+                    'lenient ordinal parsing ' + i + ' date check');
+        }
+    });
+
+    test('lenient ordinal parsing of number', function (assert) {
+        var i, testMoment;
+        for (i = 1; i <= 31; ++i) {
+            testMoment = moment('2014 01 ' + i, 'YYYY MM Do');
+            assert.equal(testMoment.year(), 2014,
+                    'lenient ordinal parsing of number ' + i + ' year check');
+            assert.equal(testMoment.month(), 0,
+                    'lenient ordinal parsing of number ' + i + ' month check');
+            assert.equal(testMoment.date(), i,
+                    'lenient ordinal parsing of number ' + i + ' date check');
+        }
+    });
+
+    test('strict ordinal parsing', function (assert) {
+        var i, ordinalStr, testMoment;
+        for (i = 1; i <= 31; ++i) {
+            ordinalStr = moment([2014, 0, i]).format('YYYY MM Do');
+            testMoment = moment(ordinalStr, 'YYYY MM Do', true);
+            assert.ok(testMoment.isValid(), 'strict ordinal parsing ' + i);
+        }
+    });
+
+    test('meridiem invariant', function (assert) {
+        var h, m, t1, t2;
+        for (h = 0; h < 24; ++h) {
+            for (m = 0; m < 60; m += 15) {
+                t1 = moment.utc([2000, 0, 1, h, m]);
+                t2 = moment.utc(t1.format('A h:mm'), 'A h:mm');
+                assert.equal(t2.format('HH:mm'), t1.format('HH:mm'),
+                        'meridiem at ' + t1.format('HH:mm'));
+            }
+        }
+    });
+
+    test('date format correctness', function (assert) {
+        var data, tokens;
+        data = moment.localeData()._longDateFormat;
+        tokens = objectKeys(data);
+        each(tokens, function (srchToken) {
+            // Check each format string to make sure it does not contain any
+            // tokens that need to be expanded.
+            each(tokens, function (baseToken) {
+                // strip escaped sequences
+                var format = data[baseToken].replace(/(\[[^\]]*\])/g, '');
+                assert.equal(false, !!~format.indexOf(srchToken),
+                        'contains ' + srchToken + ' in ' + baseToken);
+            });
+        });
+    });
+
+    test('month parsing correctness', function (assert) {
+        var i, m;
+
+        if (locale === 'tr') {
+            // I can't fix it :(
+            expect(0);
+            return;
+        }
+        function tester(format) {
+            var r;
+            r = moment(m.format(format), format);
+            assert.equal(r.month(), m.month(), 'month ' + i + ' fmt ' + format);
+            r = moment(m.format(format).toLocaleUpperCase(), format);
+            assert.equal(r.month(), m.month(), 'month ' + i + ' fmt ' + format + ' upper');
+            r = moment(m.format(format).toLocaleLowerCase(), format);
+            assert.equal(r.month(), m.month(), 'month ' + i + ' fmt ' + format + ' lower');
+
+            r = moment(m.format(format), format, true);
+            assert.equal(r.month(), m.month(), 'month ' + i + ' fmt ' + format + ' strict');
+            r = moment(m.format(format).toLocaleUpperCase(), format, true);
+            assert.equal(r.month(), m.month(), 'month ' + i + ' fmt ' + format + ' upper strict');
+            r = moment(m.format(format).toLocaleLowerCase(), format, true);
+            assert.equal(r.month(), m.month(), 'month ' + i + ' fmt ' + format + ' lower strict');
+        }
+
+        for (i = 0; i < 12; ++i) {
+            m = moment([2015, i, 15, 18]);
+            tester('MMM');
+            tester('MMM.');
+            tester('MMMM');
+            tester('MMMM.');
+        }
+    });
+
+    test('weekday parsing correctness', function (assert) {
+        var i, m;
+
+        if (locale === 'tr' || locale === 'az' || locale === 'ro') {
+            // tr, az: There is a lower-case letter (ı), that converted to
+            // upper then lower changes to i
+            // ro: there is the letter ț which behaves weird under IE8
+            expect(0);
+            return;
+        }
+        function tester(format) {
+            var r, baseMsg = 'weekday ' + m.weekday() + ' fmt ' + format + ' ' + m.toISOString();
+            r = moment(m.format(format), format);
+            assert.equal(r.weekday(), m.weekday(), baseMsg);
+            r = moment(m.format(format).toLocaleUpperCase(), format);
+            assert.equal(r.weekday(), m.weekday(), baseMsg + ' upper');
+            r = moment(m.format(format).toLocaleLowerCase(), format);
+            assert.equal(r.weekday(), m.weekday(), baseMsg + ' lower');
+
+            r = moment(m.format(format), format, true);
+            assert.equal(r.weekday(), m.weekday(), baseMsg + ' strict');
+            r = moment(m.format(format).toLocaleUpperCase(), format, true);
+            assert.equal(r.weekday(), m.weekday(), baseMsg + ' upper strict');
+            r = moment(m.format(format).toLocaleLowerCase(), format, true);
+            assert.equal(r.weekday(), m.weekday(), baseMsg + ' lower strict');
+        }
+
+        for (i = 0; i < 7; ++i) {
+            m = moment.utc([2015, 0, i + 1, 18]);
+            tester('dd');
+            tester('ddd');
+            tester('dddd');
+        }
+    });
+}
+
+function setupDeprecationHandler(test, moment$$1, scope) {
+    test._expectedDeprecations = null;
+    test._observedDeprecations = null;
+    test._oldSupress = moment$$1.suppressDeprecationWarnings;
+    moment$$1.suppressDeprecationWarnings = true;
+    test.expectedDeprecations = function () {
+        test._expectedDeprecations = arguments;
+        test._observedDeprecations = [];
+    };
+    moment$$1.deprecationHandler = function (name, msg) {
+        var deprecationId = matchedDeprecation(name, msg, test._expectedDeprecations);
+        if (deprecationId === -1) {
+            throw new Error('Unexpected deprecation thrown name=' +
+                    name + ' msg=' + msg);
+        }
+        test._observedDeprecations[deprecationId] = 1;
+    };
+}
+
+function teardownDeprecationHandler(test, moment$$1, scope) {
+    moment$$1.suppressDeprecationWarnings = test._oldSupress;
+
+    if (test._expectedDeprecations != null) {
+        var missedDeprecations = [];
+        each(test._expectedDeprecations, function (deprecationPattern, id) {
+            if (test._observedDeprecations[id] !== 1) {
+                missedDeprecations.push(deprecationPattern);
+            }
+        });
+        if (missedDeprecations.length !== 0) {
+            throw new Error('Expected deprecation warnings did not happen: ' +
+                    missedDeprecations.join(' '));
+        }
+    }
+}
+
+function matchedDeprecation(name, msg, deprecations) {
+    if (deprecations == null) {
+        return -1;
+    }
+    for (var i = 0; i < deprecations.length; ++i) {
+        if (name != null && name === deprecations[i]) {
+            return i;
+        }
+        if (msg != null && msg.substring(0, deprecations[i].length) === deprecations[i]) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+/*global QUnit:false*/
+
+var test = QUnit.test;
+
+var expect = QUnit.expect;
+
+function module$1 (name, lifecycle) {
+    QUnit.module(name, {
+        setup : function () {
+            moment.locale('en');
+            moment.createFromInputFallback = function (config) {
+                throw new Error('input not handled by moment: ' + config._i);
+            };
+            setupDeprecationHandler(test, moment, 'core');
+            if (lifecycle && lifecycle.setup) {
+                lifecycle.setup();
+            }
+        },
+        teardown : function () {
+            teardownDeprecationHandler(test, moment, 'core');
+            if (lifecycle && lifecycle.teardown) {
+                lifecycle.teardown();
+            }
+        }
+    });
+}
+
+module$1('zones', {
+    'setup': function () {
+        test.expectedDeprecations('moment().zone');
+    }
+});
+
+test('set zone', function (assert) {
+    var zone = moment();
+
+    zone.zone(0);
+    assert.equal(zone.zone(), 0, 'should be able to set the zone to 0');
+
+    zone.zone(60);
+    assert.equal(zone.zone(), 60, 'should be able to set the zone to 60');
+
+    zone.zone(-60);
+    assert.equal(zone.zone(), -60, 'should be able to set the zone to -60');
+});
+
+test('set zone shorthand', function (assert) {
+    var zone = moment();
+
+    zone.zone(1);
+    assert.equal(zone.zone(), 60, 'setting the zone to 1 should imply hours and convert to 60');
+
+    zone.zone(-1);
+    assert.equal(zone.zone(), -60, 'setting the zone to -1 should imply hours and convert to -60');
+
+    zone.zone(15);
+    assert.equal(zone.zone(), 900, 'setting the zone to 15 should imply hours and convert to 900');
+
+    zone.zone(-15);
+    assert.equal(zone.zone(), -900, 'setting the zone to -15 should imply hours and convert to -900');
+
+    zone.zone(16);
+    assert.equal(zone.zone(), 16, 'setting the zone to 16 should imply minutes');
+
+    zone.zone(-16);
+    assert.equal(zone.zone(), -16, 'setting the zone to -16 should imply minutes');
+});
+
+test('set zone with string', function (assert) {
+    var zone = moment();
+
+    zone.zone('+00:00');
+    assert.equal(zone.zone(), 0, 'set the zone with a timezone string');
+
+    zone.zone('2013-03-07T07:00:00-08:00');
+    assert.equal(zone.zone(), 480, 'set the zone with a string that does not begin with the timezone');
+
+    zone.zone('2013-03-07T07:00:00+0100');
+    assert.equal(zone.zone(), -60, 'set the zone with a string that uses the +0000 syntax');
+
+    zone.zone('2013-03-07T07:00:00+02');
+    assert.equal(zone.zone(), -120, 'set the zone with a string that uses the +00 syntax');
+
+    zone.zone('03-07-2013T07:00:00-08:00');
+    assert.equal(zone.zone(), 480, 'set the zone with a string with a non-ISO 8601 date');
+});
+
+test('change hours when changing the zone', function (assert) {
+    var zone = moment.utc([2000, 0, 1, 6]);
+
+    zone.zone(0);
+    assert.equal(zone.hour(), 6, 'UTC 6AM should be 6AM at +0000');
+
+    zone.zone(60);
+    assert.equal(zone.hour(), 5, 'UTC 6AM should be 5AM at -0100');
+
+    zone.zone(-60);
+    assert.equal(zone.hour(), 7, 'UTC 6AM should be 7AM at +0100');
+});
+
+test('change minutes when changing the zone', function (assert) {
+    var zone = moment.utc([2000, 0, 1, 6, 31]);
+
+    zone.zone(0);
+    assert.equal(zone.format('HH:mm'), '06:31', 'UTC 6:31AM should be 6:31AM at +0000');
+
+    zone.zone(30);
+    assert.equal(zone.format('HH:mm'), '06:01', 'UTC 6:31AM should be 6:01AM at -0030');
+
+    zone.zone(-30);
+    assert.equal(zone.format('HH:mm'), '07:01', 'UTC 6:31AM should be 7:01AM at +0030');
+
+    zone.zone(1380);
+    assert.equal(zone.format('HH:mm'), '07:31', 'UTC 6:31AM should be 7:31AM at +1380');
+});
+
+test('distance from the unix epoch', function (assert) {
+    var zoneA = moment(),
+        zoneB = moment(zoneA),
+        zoneC = moment(zoneA),
+        zoneD = moment(zoneA),
+        zoneE = moment(zoneA);
+
+    zoneB.utc();
+    assert.equal(+zoneA, +zoneB, 'moment should equal moment.utc');
+
+    zoneC.zone(-60);
+    assert.equal(+zoneA, +zoneC, 'moment should equal moment.zone(-60)');
+
+    zoneD.zone(480);
+    assert.equal(+zoneA, +zoneD, 'moment should equal moment.zone(480)');
+
+    zoneE.zone(1000);
+    assert.equal(+zoneA, +zoneE, 'moment should equal moment.zone(1000)');
+});
+
+test('update offset after changing any values', function (assert) {
+    var oldOffset = moment.updateOffset,
+        m = moment.utc([2000, 6, 1]);
+
+    moment.updateOffset = function (mom, keepTime) {
+        if (mom.__doChange) {
+            if (+mom > 962409600000) {
+                mom.zone(120, keepTime);
+            } else {
+                mom.zone(60, keepTime);
+            }
+        }
+    };
+
+    assert.equal(m.format('ZZ'), '+0000', 'should be at +0000');
+    assert.equal(m.format('HH:mm'), '00:00', 'should start 12AM at +0000 timezone');
+
+    m.__doChange = true;
+    m.add(1, 'h');
+
+    assert.equal(m.format('ZZ'), '-0200', 'should be at -0200');
+    assert.equal(m.format('HH:mm'), '23:00', '1AM at +0000 should be 11PM at -0200 timezone');
+
+    m.subtract(1, 'h');
+
+    assert.equal(m.format('ZZ'), '-0100', 'should be at -0100');
+    assert.equal(m.format('HH:mm'), '23:00', '12AM at +0000 should be 11PM at -0100 timezone');
+
+    moment.updateOffset = oldOffset;
+});
+
+test('getters and setters', function (assert) {
+    var a = moment([2011, 5, 20]);
+
+    assert.equal(a.clone().zone(120).year(2012).year(), 2012, 'should get and set year correctly');
+    assert.equal(a.clone().zone(120).month(1).month(), 1, 'should get and set month correctly');
+    assert.equal(a.clone().zone(120).date(2).date(), 2, 'should get and set date correctly');
+    assert.equal(a.clone().zone(120).day(1).day(), 1, 'should get and set day correctly');
+    assert.equal(a.clone().zone(120).hour(1).hour(), 1, 'should get and set hour correctly');
+    assert.equal(a.clone().zone(120).minute(1).minute(), 1, 'should get and set minute correctly');
+});
+
+test('getters', function (assert) {
+    var a = moment.utc([2012, 0, 1, 0, 0, 0]);
+
+    assert.equal(a.clone().zone(120).year(),  2011, 'should get year correctly');
+    assert.equal(a.clone().zone(120).month(),   11, 'should get month correctly');
+    assert.equal(a.clone().zone(120).date(),    31, 'should get date correctly');
+    assert.equal(a.clone().zone(120).hour(),    22, 'should get hour correctly');
+    assert.equal(a.clone().zone(120).minute(),   0, 'should get minute correctly');
+
+    assert.equal(a.clone().zone(-120).year(),  2012, 'should get year correctly');
+    assert.equal(a.clone().zone(-120).month(),    0, 'should get month correctly');
+    assert.equal(a.clone().zone(-120).date(),     1, 'should get date correctly');
+    assert.equal(a.clone().zone(-120).hour(),     2, 'should get hour correctly');
+    assert.equal(a.clone().zone(-120).minute(),   0, 'should get minute correctly');
+
+    assert.equal(a.clone().zone(-90).year(),  2012, 'should get year correctly');
+    assert.equal(a.clone().zone(-90).month(),    0, 'should get month correctly');
+    assert.equal(a.clone().zone(-90).date(),     1, 'should get date correctly');
+    assert.equal(a.clone().zone(-90).hour(),     1, 'should get hour correctly');
+    assert.equal(a.clone().zone(-90).minute(),  30, 'should get minute correctly');
+});
+
+test('from', function (assert) {
+    var zoneA = moment(),
+        zoneB = moment(zoneA).zone(720),
+        zoneC = moment(zoneA).zone(360),
+        zoneD = moment(zoneA).zone(-690),
+        other = moment(zoneA).add(35, 'm');
+
+    assert.equal(zoneA.from(other), zoneB.from(other), 'moment#from should be the same in all zones');
+    assert.equal(zoneA.from(other), zoneC.from(other), 'moment#from should be the same in all zones');
+    assert.equal(zoneA.from(other), zoneD.from(other), 'moment#from should be the same in all zones');
+});
+
+test('diff', function (assert) {
+    var zoneA = moment(),
+        zoneB = moment(zoneA).zone(720),
+        zoneC = moment(zoneA).zone(360),
+        zoneD = moment(zoneA).zone(-690),
+        other = moment(zoneA).add(35, 'm');
+
+    assert.equal(zoneA.diff(other), zoneB.diff(other), 'moment#diff should be the same in all zones');
+    assert.equal(zoneA.diff(other), zoneC.diff(other), 'moment#diff should be the same in all zones');
+    assert.equal(zoneA.diff(other), zoneD.diff(other), 'moment#diff should be the same in all zones');
+
+    assert.equal(zoneA.diff(other, 'minute', true), zoneB.diff(other, 'minute', true), 'moment#diff should be the same in all zones');
+    assert.equal(zoneA.diff(other, 'minute', true), zoneC.diff(other, 'minute', true), 'moment#diff should be the same in all zones');
+    assert.equal(zoneA.diff(other, 'minute', true), zoneD.diff(other, 'minute', true), 'moment#diff should be the same in all zones');
+
+    assert.equal(zoneA.diff(other, 'hour', true), zoneB.diff(other, 'hour', true), 'moment#diff should be the same in all zones');
+    assert.equal(zoneA.diff(other, 'hour', true), zoneC.diff(other, 'hour', true), 'moment#diff should be the same in all zones');
+    assert.equal(zoneA.diff(other, 'hour', true), zoneD.diff(other, 'hour', true), 'moment#diff should be the same in all zones');
+});
+
+test('unix offset and timestamp', function (assert) {
+    var zoneA = moment(),
+        zoneB = moment(zoneA).zone(720),
+        zoneC = moment(zoneA).zone(360),
+        zoneD = moment(zoneA).zone(-690);
+
+    assert.equal(zoneA.unix(), zoneB.unix(), 'moment#unix should be the same in all zones');
+    assert.equal(zoneA.unix(), zoneC.unix(), 'moment#unix should be the same in all zones');
+    assert.equal(zoneA.unix(), zoneD.unix(), 'moment#unix should be the same in all zones');
+
+    assert.equal(+zoneA, +zoneB, 'moment#valueOf should be the same in all zones');
+    assert.equal(+zoneA, +zoneC, 'moment#valueOf should be the same in all zones');
+    assert.equal(+zoneA, +zoneD, 'moment#valueOf should be the same in all zones');
+});
+
+test('cloning', function (assert) {
+    assert.equal(moment().zone(120).clone().zone(),   120, 'explicit cloning should retain the zone');
+    assert.equal(moment().zone(-120).clone().zone(), -120, 'explicit cloning should retain the zone');
+    assert.equal(moment(moment().zone(120)).zone(),   120, 'implicit cloning should retain the zone');
+    assert.equal(moment(moment().zone(-120)).zone(), -120, 'implicit cloning should retain the zone');
+});
+
+test('start of / end of', function (assert) {
+    var a = moment.utc([2010, 1, 2, 0, 0, 0]).zone(450);
+
+    assert.equal(a.clone().startOf('day').hour(), 0, 'start of day should work on moments with a zone');
+    assert.equal(a.clone().startOf('day').minute(), 0, 'start of day should work on moments with a zone');
+    assert.equal(a.clone().startOf('hour').minute(), 0, 'start of hour should work on moments with a zone');
+
+    assert.equal(a.clone().endOf('day').hour(), 23, 'end of day should work on moments with a zone');
+    assert.equal(a.clone().endOf('day').minute(), 59, 'end of day should work on moments with a zone');
+    assert.equal(a.clone().endOf('hour').minute(), 59, 'end of hour should work on moments with a zone');
+});
+
+test('reset zone with moment#utc', function (assert) {
+    var a = moment.utc([2012]).zone(480);
+
+    assert.equal(a.clone().hour(),      16, 'different zone should have different hour');
+    assert.equal(a.clone().utc().hour(), 0, 'calling moment#utc should reset the offset');
+});
+
+test('reset zone with moment#local', function (assert) {
+    var a = moment([2012]).zone(480);
+
+    assert.equal(a.clone().local().hour(), 0, 'calling moment#local should reset the offset');
+});
+
+test('toDate', function (assert) {
+    var zoneA = new Date(),
+        zoneB = moment(zoneA).zone(720).toDate(),
+        zoneC = moment(zoneA).zone(360).toDate(),
+        zoneD = moment(zoneA).zone(-690).toDate();
+
+    assert.equal(+zoneA, +zoneB, 'moment#toDate should output a date with the right unix timestamp');
+    assert.equal(+zoneA, +zoneC, 'moment#toDate should output a date with the right unix timestamp');
+    assert.equal(+zoneA, +zoneD, 'moment#toDate should output a date with the right unix timestamp');
+});
+
+test('same / before / after', function (assert) {
+    var zoneA = moment().utc(),
+        zoneB = moment(zoneA).zone(120),
+        zoneC = moment(zoneA).zone(-120);
+
+    assert.ok(zoneA.isSame(zoneB), 'two moments with different offsets should be the same');
+    assert.ok(zoneA.isSame(zoneC), 'two moments with different offsets should be the same');
+
+    assert.ok(zoneA.isSame(zoneB, 'hour'), 'two moments with different offsets should be the same hour');
+    assert.ok(zoneA.isSame(zoneC, 'hour'), 'two moments with different offsets should be the same hour');
+
+    zoneA.add(1, 'hour');
+
+    assert.ok(zoneA.isAfter(zoneB), 'isAfter should work with two moments with different offsets');
+    assert.ok(zoneA.isAfter(zoneC), 'isAfter should work with two moments with different offsets');
+
+    assert.ok(zoneA.isAfter(zoneB, 'hour'), 'isAfter:hour should work with two moments with different offsets');
+    assert.ok(zoneA.isAfter(zoneC, 'hour'), 'isAfter:hour should work with two moments with different offsets');
+
+    zoneA.subtract(2, 'hour');
+
+    assert.ok(zoneA.isBefore(zoneB), 'isBefore should work with two moments with different offsets');
+    assert.ok(zoneA.isBefore(zoneC), 'isBefore should work with two moments with different offsets');
+
+    assert.ok(zoneA.isBefore(zoneB, 'hour'), 'isBefore:hour should work with two moments with different offsets');
+    assert.ok(zoneA.isBefore(zoneC, 'hour'), 'isBefore:hour should work with two moments with different offsets');
+});
+
+test('add / subtract over dst', function (assert) {
+    var oldOffset = moment.updateOffset,
+        m = moment.utc([2000, 2, 31, 3]);
+
+    moment.updateOffset = function (mom, keepTime) {
+        if (mom.clone().utc().month() > 2) {
+            mom.zone(-60, keepTime);
+        } else {
+            mom.zone(0, keepTime);
+        }
+    };
+
+    assert.equal(m.hour(), 3, 'should start at 00:00');
+
+    m.add(24, 'hour');
+
+    assert.equal(m.hour(), 4, 'adding 24 hours should disregard dst');
+
+    m.subtract(24, 'hour');
+
+    assert.equal(m.hour(), 3, 'subtracting 24 hours should disregard dst');
+
+    m.add(1, 'day');
+
+    assert.equal(m.hour(), 3, 'adding 1 day should have the same hour');
+
+    m.subtract(1, 'day');
+
+    assert.equal(m.hour(), 3, 'subtracting 1 day should have the same hour');
+
+    m.add(1, 'month');
+
+    assert.equal(m.hour(), 3, 'adding 1 month should have the same hour');
+
+    m.subtract(1, 'month');
+
+    assert.equal(m.hour(), 3, 'subtracting 1 month should have the same hour');
+
+    moment.updateOffset = oldOffset;
+});
+
+test('isDST', function (assert) {
+    var oldOffset = moment.updateOffset;
+
+    moment.updateOffset = function (mom, keepTime) {
+        if (mom.month() > 2 && mom.month() < 9) {
+            mom.zone(-60, keepTime);
+        } else {
+            mom.zone(0, keepTime);
+        }
+    };
+
+    assert.ok(!moment().month(0).isDST(),  'Jan should not be summer dst');
+    assert.ok(moment().month(6).isDST(),   'Jul should be summer dst');
+    assert.ok(!moment().month(11).isDST(), 'Dec should not be summer dst');
+
+    moment.updateOffset = function (mom) {
+        if (mom.month() > 2 && mom.month() < 9) {
+            mom.zone(0);
+        } else {
+            mom.zone(-60);
+        }
+    };
+
+    assert.ok(moment().month(0).isDST(),  'Jan should be winter dst');
+    assert.ok(!moment().month(6).isDST(), 'Jul should not be winter dst');
+    assert.ok(moment().month(11).isDST(), 'Dec should be winter dst');
+
+    moment.updateOffset = oldOffset;
+});
+
+test('zone names', function (assert) {
+    test.expectedDeprecations();
+    assert.equal(moment().zoneAbbr(),   '', 'Local zone abbr should be empty');
+    assert.equal(moment().format('z'),  '', 'Local zone formatted abbr should be empty');
+    assert.equal(moment().zoneName(),   '', 'Local zone name should be empty');
+    assert.equal(moment().format('zz'), '', 'Local zone formatted name should be empty');
+
+    assert.equal(moment.utc().zoneAbbr(),   'UTC', 'UTC zone abbr should be UTC');
+    assert.equal(moment.utc().format('z'),  'UTC', 'UTC zone formatted abbr should be UTC');
+    assert.equal(moment.utc().zoneName(),   'Coordinated Universal Time', 'UTC zone abbr should be Coordinated Universal Time');
+    assert.equal(moment.utc().format('zz'), 'Coordinated Universal Time', 'UTC zone formatted abbr should be Coordinated Universal Time');
+});
+
+test('hours alignment with UTC', function (assert) {
+    assert.equal(moment().zone(120).hasAlignedHourOffset(), true);
+    assert.equal(moment().zone(-180).hasAlignedHourOffset(), true);
+    assert.equal(moment().zone(90).hasAlignedHourOffset(), false);
+    assert.equal(moment().zone(-90).hasAlignedHourOffset(), false);
+});
+
+test('hours alignment with other zone', function (assert) {
+    var m = moment().zone(120);
+
+    assert.equal(m.hasAlignedHourOffset(moment().zone(180)), true);
+    assert.equal(m.hasAlignedHourOffset(moment().zone(-180)), true);
+    assert.equal(m.hasAlignedHourOffset(moment().zone(90)), false);
+    assert.equal(m.hasAlignedHourOffset(moment().zone(-90)), false);
+
+    m = moment().zone(90);
+
+    assert.equal(m.hasAlignedHourOffset(moment().zone(180)), false);
+    assert.equal(m.hasAlignedHourOffset(moment().zone(-180)), false);
+    assert.equal(m.hasAlignedHourOffset(moment().zone(30)), true);
+    assert.equal(m.hasAlignedHourOffset(moment().zone(-30)), true);
+
+    m = moment().zone(-60);
+
+    assert.equal(m.hasAlignedHourOffset(moment().zone(180)), true);
+    assert.equal(m.hasAlignedHourOffset(moment().zone(-180)), true);
+    assert.equal(m.hasAlignedHourOffset(moment().zone(90)), false);
+    assert.equal(m.hasAlignedHourOffset(moment().zone(-90)), false);
+
+    m = moment().zone(25);
+
+    assert.equal(m.hasAlignedHourOffset(moment().zone(-35)), true);
+    assert.equal(m.hasAlignedHourOffset(moment().zone(85)), true);
+
+    assert.equal(m.hasAlignedHourOffset(moment().zone(35)), false);
+    assert.equal(m.hasAlignedHourOffset(moment().zone(-85)), false);
+});
+
+test('parse zone', function (assert) {
+    var m = moment('2013-01-01T00:00:00-13:00').parseZone();
+    assert.equal(m.zone(), 13 * 60);
+    assert.equal(m.hours(), 0);
+});
+
+test('parse zone static', function (assert) {
+    var m = moment.parseZone('2013-01-01T00:00:00-13:00');
+    assert.equal(m.zone(), 13 * 60);
+    assert.equal(m.hours(), 0);
+});
+
+test('parse zone with more arguments', function (assert) {
+    test.expectedDeprecations();
+    var m;
+    m = moment.parseZone('2013 01 01 05 -13:00', 'YYYY MM DD HH ZZ');
+    assert.equal(m.format(), '2013-01-01T05:00:00-13:00', 'accept input and format');
+    m = moment.parseZone('2013-01-01-13:00', 'YYYY MM DD ZZ', true);
+    assert.equal(m.isValid(), false, 'accept input, format and strict flag');
+    m = moment.parseZone('2013-01-01-13:00', ['DD MM YYYY ZZ', 'YYYY MM DD ZZ']);
+    assert.equal(m.format(), '2013-01-01T00:00:00-13:00', 'accept input and array of formats');
+});
+
+test('parse zone with a timezone from the format string', function (assert) {
+    var m = moment('11-12-2013 -0400 +1100', 'DD-MM-YYYY ZZ #####').parseZone();
+
+    assert.equal(m.zone(), 4 * 60);
+});
+
+test('parse zone without a timezone included in the format string', function (assert) {
+    var m = moment('11-12-2013 -0400 +1100', 'DD-MM-YYYY').parseZone();
+
+    assert.equal(m.zone(), -11 * 60);
+});
+
+test('timezone format', function (assert) {
+    assert.equal(moment().zone(-60).format('ZZ'), '+0100', '-60 -> +0100');
+    assert.equal(moment().zone(-90).format('ZZ'), '+0130', '-90 -> +0130');
+    assert.equal(moment().zone(-120).format('ZZ'), '+0200', '-120 -> +0200');
+
+    assert.equal(moment().zone(+60).format('ZZ'), '-0100', '+60 -> -0100');
+    assert.equal(moment().zone(+90).format('ZZ'), '-0130', '+90 -> -0130');
+    assert.equal(moment().zone(+120).format('ZZ'), '-0200', '+120 -> -0200');
+});
+
+test('parse zone without a timezone', function (assert) {
+    test.expectedDeprecations();
+    var m1 = moment.parseZone('2016-02-01T00:00:00');
+    var m2 = moment.parseZone('2016-02-01T00:00:00Z');
+    var m3 = moment.parseZone('2016-02-01T00:00:00+00:00'); //Someone might argue this is not necessary, you could even argue that is wrong being here.
+    var m4 = moment.parseZone('2016-02-01T00:00:00+0000'); //Someone might argue this is not necessary, you could even argue that is wrong being here.
+    assert.equal(
+        m1.format('M D YYYY HH:mm:ss ZZ'),
+        '2 1 2016 00:00:00 +0000',
+        'Not providing a timezone should keep the time and change the zone to 0'
+    );
+    assert.equal(
+        m2.format('M D YYYY HH:mm:ss ZZ'),
+        '2 1 2016 00:00:00 +0000',
+        'Not providing a timezone should keep the time and change the zone to 0'
+    );
+    assert.equal(
+        m3.format('M D YYYY HH:mm:ss ZZ'),
+        '2 1 2016 00:00:00 +0000',
+        'Not providing a timezone should keep the time and change the zone to 0'
+    );
+    assert.equal(
+        m4.format('M D YYYY HH:mm:ss ZZ'),
+        '2 1 2016 00:00:00 +0000',
+        'Not providing a timezone should keep the time and change the zone to 0'
+    );
+});
+
+})));

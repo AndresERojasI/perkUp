@@ -1,23 +1,23 @@
 /**
  * @namespace Chart
  */
-var Chart = require('./web_core/web_core.js')();
+var Chart = require('./core/core.js')();
 
-require('./web_core/web_core.helpers')(Chart);
-require('./web_core/web_core.canvasHelpers')(Chart);
-require('./web_core/web_core.element')(Chart);
-require('./web_core/web_core.animation')(Chart);
-require('./web_core/web_core.controller')(Chart);
-require('./web_core/web_core.datasetController')(Chart);
-require('./web_core/web_core.layoutService')(Chart);
-require('./web_core/web_core.scaleService')(Chart);
-require('./web_core/web_core.plugin.js')(Chart);
-require('./web_core/web_core.ticks.js')(Chart);
-require('./web_core/web_core.scale')(Chart);
-require('./web_core/web_core.title')(Chart);
-require('./web_core/web_core.legend')(Chart);
-require('./web_core/web_core.interaction')(Chart);
-require('./web_core/web_core.tooltip')(Chart);
+require('./core/core.helpers')(Chart);
+require('./core/core.canvasHelpers')(Chart);
+require('./core/core.element')(Chart);
+require('./core/core.animation')(Chart);
+require('./core/core.controller')(Chart);
+require('./core/core.datasetController')(Chart);
+require('./core/core.layoutService')(Chart);
+require('./core/core.scaleService')(Chart);
+require('./core/core.plugin.js')(Chart);
+require('./core/core.ticks.js')(Chart);
+require('./core/core.scale')(Chart);
+require('./core/core.title')(Chart);
+require('./core/core.legend')(Chart);
+require('./core/core.interaction')(Chart);
+require('./core/core.tooltip')(Chart);
 
 require('./elements/element.arc')(Chart);
 require('./elements/element.line')(Chart);
@@ -32,7 +32,7 @@ require('./scales/scale.radialLinear')(Chart);
 require('./scales/scale.time')(Chart);
 
 // Controllers must be loaded after elements
-// See Chart.web_core.datasetController.dataElementType
+// See Chart.core.datasetController.dataElementType
 require('./controllers/controller.bar')(Chart);
 require('./controllers/controller.bubble')(Chart);
 require('./controllers/controller.doughnut')(Chart);

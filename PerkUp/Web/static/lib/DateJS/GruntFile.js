@@ -2,7 +2,7 @@
 // Run using NodeJS and the Grunt module
 var fs = require("fs");
 var dirs = {
-	core: "src/web_core",
+	core: "src/core",
 	i18n: "src/i18n",
 	build: "build"
 };
@@ -64,34 +64,34 @@ module.exports = function(grunt) {
 			core: {
 				src: [
 					"<%= dirs.core %>/i18n.js",
-					"<%= dirs.web_core %>/web_core.js",
-					"<%= dirs.web_core %>/web_core-prototypes.js",
-					"<%= dirs.web_core %>/sugarpak.js",
-					"<%= dirs.web_core %>/format_parser.js",
-					"<%= dirs.web_core %>/parsing_operators.js",
+					"<%= dirs.core %>/core.js",
+					"<%= dirs.core %>/core-prototypes.js",
+					"<%= dirs.core %>/sugarpak.js",
+					"<%= dirs.core %>/format_parser.js",
+					"<%= dirs.core %>/parsing_operators.js",
 					"<%= dirs.core %>/parsing_translator.js",
-					"<%= dirs.web_core %>/parsing_grammar.js",
-					"<%= dirs.web_core %>/parser.js",
-					"<%= dirs.web_core %>/extras.js",
-					"<%= dirs.web_core %>/time_span.js",
+					"<%= dirs.core %>/parsing_grammar.js",
+					"<%= dirs.core %>/parser.js",
+					"<%= dirs.core %>/extras.js",
+					"<%= dirs.core %>/time_span.js",
 					"<%= dirs.core %>/time_period.js"
 				],
 				dest: "<%= dirs.build %>/date-core.js"
 			},
 			basic: {
 				src: [
-					"<%= dirs.web_core %>/i18n.js",
-					"<%= dirs.web_core %>/web_core.js",
-					"<%= dirs.web_core %>/web_core-prototypes.js",
-					"<%= dirs.web_core %>/sugarpak.js",
+					"<%= dirs.core %>/i18n.js",
+					"<%= dirs.core %>/core.js",
+					"<%= dirs.core %>/core-prototypes.js",
+					"<%= dirs.core %>/sugarpak.js",
 					"<%= dirs.core %>/format_parser.js",
-					"<%= dirs.web_core %>/parsing_operators.js",
+					"<%= dirs.core %>/parsing_operators.js",
 					"<%= dirs.core %>/parsing_translator.js",
 					"<%= dirs.core %>/parsing_grammar.js",
 					"<%= dirs.core %>/parser.js",
 					"<%= dirs.core %>/extras.js",
-					"<%= dirs.web_core %>/time_span.js",
-					"<%= dirs.web_core %>/time_period.js"
+					"<%= dirs.core %>/time_span.js",
+					"<%= dirs.core %>/time_period.js"
 				],
 				dest: "<%= dirs.build %>/date.js"
 			}
@@ -115,18 +115,18 @@ module.exports = function(grunt) {
 		},
 		jasmine : {
 			src : [
-				"src/web_core/i18n.js",
-				"src/web_core/web_core.js",
-				"src/web_core/web_core-prototypes.js",
+				"src/core/i18n.js",
+				"src/core/core.js",
+				"src/core/core-prototypes.js",
 				"src/core/sugarpak.js",
 				"src/core/format_parser.js",
-				"src/web_core/parsing_operators.js",
-				"src/web_core/parsing_translator.js",
-				"src/web_core/parsing_grammar.js",
-				"src/web_core/parser.js",
+				"src/core/parsing_operators.js",
+				"src/core/parsing_translator.js",
+				"src/core/parsing_grammar.js",
+				"src/core/parser.js",
 				"src/core/extras.js",
-				"src/web_core/time_period.js",
-				"src/web_core/time_span.js"
+				"src/core/time_period.js",
+				"src/core/time_span.js"
 			],
 			options : {
 				specs : "specs/*-spec.js",
@@ -147,7 +147,7 @@ module.exports = function(grunt) {
 
 	});
 
-	grunt.registerMultiTask("i18n", "Wraps DateJS web_core with Internationalization info.", function() {
+	grunt.registerMultiTask("i18n", "Wraps DateJS core with Internationalization info.", function() {
 		var data = this.data,
 			path = require("path"),
 			dest = grunt.template.process(data.dest),
@@ -166,10 +166,10 @@ module.exports = function(grunt) {
 		grunt.file.delete(dirs.build+"/date-core.js");
 	});
 	grunt.registerMultiTask("build_dev", "Builds compiled, non-minfied, files for development enviroments", function() {
-		grunt.task.run(["concat:web_core", "concat:basic", "i18n:web_core"]);
+		grunt.task.run(["concat:core", "concat:basic", "i18n:core"]);
 	});
 	grunt.registerMultiTask("build_prod", "Rebuilds dev and minifies files for production enviroments", function() {
-		grunt.task.run(["concat:web_core", "concat:basic", "i18n:web_core", "closurecompiler:minify"]);
+		grunt.task.run(["concat:core", "concat:basic", "i18n:core", "closurecompiler:minify"]);
 	});
 
 	grunt.loadNpmTasks("grunt-contrib-jasmine");

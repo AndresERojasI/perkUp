@@ -1,4 +1,4 @@
-from handlers import home, auth
+from handlers import home, auth, datasources
 
 def getRoutes():
 
@@ -10,6 +10,8 @@ def getRoutes():
         (r"^/organization/create$", auth.OrganizationCreationHandler),
         (r"^/organization/createAdmin$", auth.CreateAdminHandler),
         (r"^/organization/validate_subdomain$", auth.ValidateSubdomain),
+        (r"^/datasource/create$", datasources.CreateDatasource),
+        (r"^/datasource/update$", datasources.UpdateDatasource),
         (r"^(.+)$", home.NotFoundHandler),
     ]
 

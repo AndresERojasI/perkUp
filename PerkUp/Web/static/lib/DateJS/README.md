@@ -42,7 +42,7 @@ DateJS will always support loading US English via `Date.i18n.setLanguage("en-US"
     * `development` Non-minified files with full comments. Suitable for development environments.
     * `production` Fully minified (by Google's Closure Compiler) files suitable for production.  
 *  `src` All the source files used to build the final files.
-    * `web_core` The main DateJS source files.
+    * `core` The main DateJS source files.
     * `i18n` Internationalization files. Language specifics (days of the week, regex formats,etc). Organized by IETF language tag (eg - en-US, etc).
 * `specs` Unit Tests written using [Jasmine](http://pivotal.github.io/jasmine/). Code coverage is calculated by [BlanketJS](http://blanketjs.org/). 
 * `tests` Orginal unit tests for 2008 project. *Deprecated*

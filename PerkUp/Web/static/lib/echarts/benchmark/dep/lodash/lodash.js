@@ -1292,7 +1292,7 @@
         objectProto = context.Object.prototype,
         stringProto = context.String.prototype;
 
-    /** Used to detect overreaching web_core-js shims. */
+    /** Used to detect overreaching core-js shims. */
     var coreJsData = context['__core-js_shared__'];
 
     /** Used to detect methods masquerading as native. */
@@ -11409,12 +11409,12 @@
      * Checks if `value` is a pristine native function.
      *
      * **Note:** This method can't reliably detect native functions in the presence
-     * of the web_core-js package because web_core-js circumvents this kind of detection.
-     * Despite multiple requests, the web_core-js maintainer has made it clear: any
+     * of the core-js package because core-js circumvents this kind of detection.
+     * Despite multiple requests, the core-js maintainer has made it clear: any
      * attempt to fix the detection will be obstructed. As a result, we're left
      * with little choice but to throw an error. Unfortunately, this also affects
      * packages, like [babel-polyfill](https://www.npmjs.com/package/babel-polyfill),
-     * which rely on web_core-js.
+     * which rely on core-js.
      *
      * @static
      * @memberOf _
@@ -11433,7 +11433,7 @@
      */
     function isNative(value) {
       if (isMaskable(value)) {
-        throw new Error('This method is not supported with web_core-js. Try https://github.com/es-shims.');
+        throw new Error('This method is not supported with core-js. Try https://github.com/es-shims.');
       }
       return baseIsNative(value);
     }

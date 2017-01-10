@@ -32,11 +32,28 @@ class Datasource(BaseModel, Base):
     __tablename__ = 'datasource'
 
     id = Column(Integer, Sequence('datasource_seq'), primary_key=True)
+    name = Column(String(200))
     host = Column(String(200))
-    port = Column(SmallInteger)
+    port = Column(Integer)
     user = Column(String(200))
     schema = Column(String(200))
     password = Column(String(200))
+    type = Column(Enum(
+        'Firebird',
+        'Microsoft SQL Server',
+        'MySQL',
+        'Oracle',
+        'PostgreSQL',
+        'Sybase',
+        name='type'))
+    ssh_server = Column(String(200))
+    ssh_port = Column(String(6))
+    ssh_user = Column(String(200))
+    ssh_password = Column(String(200))
+    ssh_key_pub = Column(Text)
+    ssh_key_pass_phrase = Column(String(200))
+
+
 
     #Foreign keys
     organization_id = Column(Integer, ForeignKey('organization.id'))

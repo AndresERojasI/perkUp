@@ -12,5 +12,6 @@
     "commit": "324a82b78b12f0c409723071b621ae64b22c812f"
   },
   "_source": "https://github.com/nnnick/Chart.js.git",
-  "_target": "^2.0.2"
+  "_target": "^2.0.2",
+  "_originalSource": "Chart.js"
 }

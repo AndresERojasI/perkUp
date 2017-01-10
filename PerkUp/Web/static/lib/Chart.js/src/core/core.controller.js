@@ -20,7 +20,7 @@ module.exports = function(Chart) {
 	 * if the computed style is not expressed in pixels. That can happen in some cases where
 	 * `element` has a size relative to its parent and this last one is not yet displayed,
 	 * for example because of `display: none` on a parent node.
-	 * TODO(SB) Move this method in the upcoming web_core.platform class.
+	 * TODO(SB) Move this method in the upcoming core.platform class.
 	 * @see https://developer.mozilla.org/en-US/docs/Web/CSS/used_value
 	 * @returns {Number} Size in pixels or undefined if unknown.
 	 */
@@ -34,7 +34,7 @@ module.exports = function(Chart) {
 	 * Initializes the canvas style and render size without modifying the canvas display size,
 	 * since responsiveness is handled by the controller.resize() method. The config is used
 	 * to determine the aspect ratio to apply in case no explicit height has been specified.
-	 * TODO(SB) Move this method in the upcoming web_core.platform class.
+	 * TODO(SB) Move this method in the upcoming core.platform class.
 	 */
 	function initCanvas(canvas, config) {
 		var style = canvas.style;
@@ -88,7 +88,7 @@ module.exports = function(Chart) {
 
 	/**
 	 * Restores the canvas initial state, such as render/display sizes and style.
-	 * TODO(SB) Move this method in the upcoming web_core.platform class.
+	 * TODO(SB) Move this method in the upcoming core.platform class.
 	 */
 	function releaseCanvas(canvas) {
 		if (!canvas._chartjs) {
@@ -119,7 +119,7 @@ module.exports = function(Chart) {
 	}
 
 	/**
-	 * TODO(SB) Move this method in the upcoming web_core.platform class.
+	 * TODO(SB) Move this method in the upcoming core.platform class.
 	 */
 	function acquireContext(item, config) {
 		if (typeof item === 'string') {

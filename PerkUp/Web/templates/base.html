@@ -19,10 +19,6 @@
     <link href="{{ static_url('lib/iCheck/skins/flat/green.css') }}" rel="stylesheet">
     <!-- bootstrap-progressbar -->
     <link href="{{ static_url('lib/bootstrap-progressbar/css/bootstrap-progressbar-3.3.4.min.css') }}" rel="stylesheet">
-    <!-- JQVMap -->
-    <link href="{{ static_url('lib/jqvmap/dist/jqvmap.min.css') }}" rel="stylesheet"/>
-    <!-- bootstrap-daterangepicker -->
-    <link href="{{ static_url('lib/bootstrap-daterangepicker/daterangepicker.css') }}" rel="stylesheet">
 
     <!-- Custom Theme Style -->
     <link href="{{ static_url('custom/css/custom.css') }}" rel="stylesheet">
@@ -60,9 +56,27 @@
               <div class="menu_section">
                 <h3>Menu</h3>
                 <ul class="nav side-menu">
-                  <li><a><i class="fa fa-home"></i> Home <span class="fa fa-chevron-down"></span></a>
+                  <li><a href="/"><i class="fa fa-home"></i> Home </a>
+                  </li>
+
+                  <li><a><i class="fa fa-database"></i> Datasources <span class="fa fa-chevron-down"></span></a>
                     <ul class="nav child_menu">
-                      <li><a href="#">Dashboard</a></li>
+                      <li><a href="#">List Datasources</a></li>
+                      <li><a href="/datasource/create">Create new Datasource</a></li>
+                    </ul>
+                  </li>
+
+                  <li><a><i class="fa fa-share-alt"></i> API Endpoints <span class="fa fa-chevron-down"></span></a>
+                    <ul class="nav child_menu">
+                      <li><a href="#">List Endpoints</a></li>
+                      <li><a href="#">Create new Endpoint</a></li>
+                    </ul>
+                  </li>
+
+                  <li><a><i class="fa fa-users"></i> API Clients <span class="fa fa-chevron-down"></span></a>
+                    <ul class="nav child_menu">
+                      <li><a href="#">List Clients</a></li>
+                      <li><a href="#">Create new Client</a></li>
                     </ul>
                   </li>
                 </ul>
@@ -115,42 +129,19 @@
     </div>
 
     <!-- jQuery -->
-    <script src="{{ static_url('lib//jquery/dist/jquery.min.js') }}"></script>
+    <script src="{{ static_url('lib/jquery/dist/jquery.min.js') }}"></script>
     <!-- Bootstrap -->
-    <script src="{{ static_url('lib//bootstrap/dist/js/bootstrap.min.js') }}"></script>
+    <script src="{{ static_url('lib/bootstrap/dist/js/bootstrap.min.js') }}"></script>
     <!-- FastClick -->
-    <script src="{{ static_url('lib//fastclick/lib/fastclick.js') }}"></script>
+    <script src="{{ static_url('lib/fastclick/lib/fastclick.js') }}"></script>
     <!-- NProgress -->
-    <script src="{{ static_url('lib//nprogress/nprogress.js') }}"></script>
-    <!-- Chart.js -->
-    <script src="{{ static_url('lib//Chart.js/dist/Chart.min.js') }}"></script>
-    <!-- gauge.js -->
-    <script src="{{ static_url('lib//gauge.js/dist/gauge.min.js') }}"></script>
+    <script src="{{ static_url('lib/nprogress/nprogress.js') }}"></script>
     <!-- bootstrap-progressbar -->
-    <script src="{{ static_url('lib//bootstrap-progressbar/bootstrap-progressbar.min.js') }}"></script>
+    <script src="{{ static_url('lib/bootstrap-progressbar/bootstrap-progressbar.min.js') }}"></script>
     <!-- iCheck -->
-    <script src="{{ static_url('lib//iCheck/icheck.min.js') }}"></script>
+    <script src="{{ static_url('lib/iCheck/icheck.min.js') }}"></script>
     <!-- Skycons -->
-    <script src="{{ static_url('lib//skycons/skycons.js') }}"></script>
-    <!-- Flot -->
-    <script src="{{ static_url('lib//Flot/jquery.flot.js') }}"></script>
-    <script src="{{ static_url('lib//Flot/jquery.flot.pie.js') }}"></script>
-    <script src="{{ static_url('lib//Flot/jquery.flot.time.js') }}"></script>
-    <script src="{{ static_url('lib//Flot/jquery.flot.stack.js') }}"></script>
-    <script src="{{ static_url('lib//Flot/jquery.flot.resize.js') }}"></script>
-    <!-- Flot plugins -->
-    <script src="{{ static_url('lib//flot.orderbars/js/jquery.flot.orderBars.js') }}"></script>
-    <script src="{{ static_url('lib//flot-spline/js/jquery.flot.spline.min.js') }}"></script>
-    <script src="{{ static_url('lib//flot.curvedlines/curvedLines.js') }}"></script>
-    <!-- DateJS -->
-    <script src="{{ static_url('lib//DateJS/build/date.js') }}"></script>
-    <!-- JQVMap -->
-    <script src="{{ static_url('lib//jqvmap/dist/jquery.vmap.js') }}"></script>
-    <script src="{{ static_url('lib//jqvmap/dist/maps/jquery.vmap.world.js') }}"></script>
-    <script src="{{ static_url('lib//jqvmap/examples/js/jquery.vmap.sampledata.js') }}"></script>
-    <!-- bootstrap-daterangepicker -->
-    <script src="{{ static_url('lib//moment/min/moment.min.js') }}"></script>
-    <script src="{{ static_url('lib//bootstrap-daterangepicker/daterangepicker.js') }}"></script>
+    <script src="{{ static_url('lib/skycons/skycons.js') }}"></script>
 
     <!-- Custom Theme Scripts -->
     <script src="{{ static_url('custom/js/custom.min.js') }}"></script>

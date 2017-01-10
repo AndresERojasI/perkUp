@@ -35,5 +35,6 @@
     "commit": "3a45b04e099bdaee5152b39eef21d6568d35c86d"
   },
   "_source": "https://github.com/christianesperar/jqvmap.git",
-  "_target": "master"
+  "_target": "master",
+  "_originalSource": "https://github.com/christianesperar/jqvmap.git"
 }

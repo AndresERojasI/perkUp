@@ -5,9 +5,7 @@ import simplejson as json
 class HomeHandler(base.BaseHandler):
     @tornado.web.authenticated
     def get(self):
-        user = json.loads(self.get_secure_cookie('user'))
-
-        return self.render("index.html", user = user)
+        return self.render("index.html", user = self.get_current_user())
 
 class NotFoundHandler(base.BaseHandler):
     """

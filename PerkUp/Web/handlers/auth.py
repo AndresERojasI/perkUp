@@ -86,7 +86,8 @@ class OrganizationCreationHandler(base.BaseHandler):
             'org_address': org_address,
             'latittude_long': lat_lang,
         }))
-        self.redirect('/organization/createAdmin')
+
+        self.redirect('/')
 
 
 
