@@ -1,10 +1,14 @@
 from . import base
-from sqlalchemy.orm import sessionmaker
 import tornado.web
 from web_core import models
 import web_core.SSH.ssh_maker as SSH
 import os
 import tornado.escape
+from sshtunnel import SSHTunnelForwarder
+from sqlalchemy import create_engine
+
+
+__UPLOADS__ = "static/ssh_keys/"
 
 class CreateDatasource(base.BaseHandler):
     @tornado.web.authenticated
@@ -71,7 +75,8 @@ class UpdateDatasource(base.BaseHandler):
     @tornado.web.authenticated
     def get(self):
         ds_id = self.get_argument('ds_id', None)
-
+        user=self.get_current_user()
+        organization_data = user['organization']
         if ds_id == None:
             return self.render(
                 "datasources/update.html",
@@ -85,6 +90,38 @@ class UpdateDatasource(base.BaseHandler):
             .filter(models.Datasource.id == ds_id) \
             .one_or_none()
 
+        connection_test = None
+        try:
+            file_path = "{}{}/{}/".format(__UPLOADS__, organization_data['id'], datasource.name)
+
+            server = SSHTunnelForwarder(
+                (datasource.ssh_server, int(datasource.ssh_port)),
+                ssh_username=datasource.ssh_user,
+                ssh_pkey=file_path+'private.key',
+                ssh_private_key_password=datasource.ssh_key_pass_phrase,
+                remote_bind_address=(datasource.host, int(datasource.port))
+            )
+
+            server.start()
+
+            db_url = 'mysql+mysqldb://{}:{}@{}:{}/{}'.format(datasource.user, datasource.password, datasource.host, server.local_bind_port, datasource.schema)
+            engine = create_engine(db_url, pool_recycle=360)
+            with engine.connect() as con:
+
+                rs = con.execute('SHOW TABLES')
+
+                for row in rs:
+                    print row
+
+                con.close()
+            server.stop()
+        except Exception, e:
+            print "Error: -------------"
+            print str(e)
+            print "-------------"
+            connection_test = None
+
+
         if datasource == None:
             return self.render(
                 "datasources/update.html",
@@ -96,6 +133,6 @@ class UpdateDatasource(base.BaseHandler):
         return self.render(
             "datasources/update.html",
             errors=False,
-            user=self.get_current_user(),
+            user=user,
             datasource=datasource
         )
