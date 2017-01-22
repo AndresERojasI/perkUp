@@ -655,7 +655,7 @@
 
     /**
      * sanitize
-     * Public method providing web_core sanitation functionality
+     * Public method providing core sanitation functionality
      *
      * @param {String} dirty string
      * @param {Object} configuration object

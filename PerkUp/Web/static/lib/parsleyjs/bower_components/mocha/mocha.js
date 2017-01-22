@@ -8552,7 +8552,7 @@ var objectKeys = Object.keys || function (obj) {
 
 
 /*<replacement>*/
-var util = require('web_core-util-is');
+var util = require('core-util-is');
 util.inherits = require('inherits');
 /*</replacement>*/
 
@@ -8636,7 +8636,7 @@ module.exports = PassThrough;
 var Transform = require('./_stream_transform');
 
 /*<replacement>*/
-var util = require('web_core-util-is');
+var util = require('core-util-is');
 util.inherits = require('inherits');
 /*</replacement>*/
 
@@ -8700,7 +8700,7 @@ if (!EE.listenerCount) EE.listenerCount = function(emitter, type) {
 var Stream = require('stream');
 
 /*<replacement>*/
-var util = require('web_core-util-is');
+var util = require('core-util-is');
 util.inherits = require('inherits');
 /*</replacement>*/
 
@@ -9678,7 +9678,7 @@ module.exports = Transform;
 var Duplex = require('./_stream_duplex');
 
 /*<replacement>*/
-var util = require('web_core-util-is');
+var util = require('core-util-is');
 util.inherits = require('inherits');
 /*</replacement>*/
 
@@ -9856,7 +9856,7 @@ Writable.WritableState = WritableState;
 
 
 /*<replacement>*/
-var util = require('web_core-util-is');
+var util = require('core-util-is');
 util.inherits = require('inherits');
 /*</replacement>*/
 
@@ -9901,7 +9901,7 @@ function WritableState(options, stream) {
   this.finished = false;
 
   // should we decode strings into buffers before passing to _write?
-  // this is here so that some node-web_core streams can optimize string
+  // this is here so that some node-core streams can optimize string
   // handling at a lower level.
   var noDecode = options.decodeStrings === false;
   this.decodeStrings = !noDecode;

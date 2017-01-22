@@ -9445,7 +9445,7 @@ function Calendar_constructor(element, overrides) {
 	var localeData;
 
 	// Called immediately, and when any of the options change.
-	// Happens before any internal objects rebuild or rerender, because this is very web_core.
+	// Happens before any internal objects rebuild or rerender, because this is very core.
 	t.bindOptions([
 		'lang', 'monthNames', 'monthNamesShort', 'dayNames', 'dayNamesShort', 'firstDay', 'weekNumberCalculation'
 	], function(lang, monthNames, monthNamesShort, dayNames, dayNamesShort, firstDay, weekNumberCalculation) {

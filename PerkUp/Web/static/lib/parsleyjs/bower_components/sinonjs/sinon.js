@@ -260,7 +260,7 @@ if (typeof buster === "undefined") {
 }
 
 if (typeof module === "object" && typeof require === "function") {
-    buster = require("buster-web_core");
+    buster = require("buster-core");
 }
 
 buster.format = buster.format || {};
@@ -456,7 +456,7 @@ if (typeof module != "undefined") {
 /*jslint eqeqeq: false, onevar: false, forin: true, nomen: false, regexp: false, plusplus: false*/
 /*global module, require, __dirname, document*/
 /**
- * Sinon web_core utilities. For internal use only.
+ * Sinon core utilities. For internal use only.
  *
  * @author Christian Johansen (christian@cjohansen.no)
  * @license BSD

@@ -97,7 +97,8 @@
     </div>
     <div class="clearfix"></div>
     <br>
-    <button type="submit" class="btn btn-primary btn-lg btn-block">Create Datasource</button>
+    {% module xsrf_form_html() %}
+    <button type="submit" class="btn btn-primary btn-lg btn-block">Update Datasource</button>
 </form>
 <div class="clearfix"></div>
 {% end %}

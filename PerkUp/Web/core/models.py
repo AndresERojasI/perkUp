@@ -6,15 +6,25 @@ from sqlalchemy import *
 from sqlalchemy import create_engine, ForeignKey, func
 from sqlalchemy import Column, Date, Integer, String, DateTime
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship, backref, sessionmaker
+from sqlalchemy.orm import relationship, backref
 
-engine = create_engine('mysql://root:123456@localhost/perkup', echo=True)
+db_string = 'mysql+mysqldb://{}:{}@{}:{}/{}'.format(
+    'root',
+    '123456',
+    'localhost',
+    3306,
+    'perkup'
+)
+
+engine = create_engine(db_string, echo=True, pool_recycle=360)
 Base = declarative_base()
 Base.metadata.bind = engine
 
-class BaseModel():
+
+class BaseModel:
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now())
+
 
 class Organization(BaseModel, Base):
     """"""
@@ -26,6 +36,7 @@ class Organization(BaseModel, Base):
     address = Column(String(100))
     unique_domain = Column(String(50))
     lat_lang = Column(String(50))
+
 
 class Datasource(BaseModel, Base):
     """"""
@@ -53,8 +64,6 @@ class Datasource(BaseModel, Base):
     ssh_key_pub = Column(Text)
     ssh_key_pass_phrase = Column(String(200))
 
-
-
     #Foreign keys
     organization_id = Column(Integer, ForeignKey('organization.id'))
     organization_datasource = relationship(
@@ -63,7 +72,8 @@ class Datasource(BaseModel, Base):
                          uselist=True,
                          cascade='delete,all'))
 
-class User(BaseModel, Base) :
+
+class User(BaseModel, Base):
     """"""
     __tablename__ = 'user'
 
@@ -82,5 +92,3 @@ class User(BaseModel, Base) :
         backref=backref('organization_user',
                          uselist=True,
                          cascade='delete,all'))
-
-Base.metadata.create_all(engine)

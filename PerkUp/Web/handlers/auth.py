@@ -1,9 +1,9 @@
 from . import base
 import tornado
-import web_core
+import core
 import os, uuid
 import simplejson as json
-from web_core import models
+from core import models
 import pprint
 from sqlalchemy import inspect
 
@@ -23,26 +23,26 @@ class AuthHandler(base.BaseHandler):
         password = self.get_argument('password', None)
 
         try:
-            user = session.query(web_core.models.User) \
-                .filter(web_core.models.User.username == username, web_core.models.User.password == password) \
+            user = session.query(core.models.User) \
+                .filter(core.models.User.username == username, core.models.User.password == password) \
                 .first()
 
             if user == None:
                 return self.render("auth/login.html", errors="Login failed, please check your credentials andd try again")
             else:
                 self.set_secure_cookie('user', json.dumps({
-                    'name' : user.name,
-                    'last_name' : user.last_name,
-                    'email' : user.email,
-                    'username' : user.username,
-                    'avatar' : user.avatar,
+                    'name': user.name,
+                    'last_name': user.last_name,
+                    'email': user.email,
+                    'username': user.username,
+                    'avatar': user.avatar,
                     'organization': {
-                        'id' : user.organization_user.id,
-                        'name' : user.organization_user.name,
-                        'logo' : user.organization_user.logo,
-                        'address' : user.organization_user.address,
-                        'unique_domain' : user.organization_user.unique_domain,
-                        'lat_lang' : user.organization_user.lat_lang
+                        'id': user.organization_user.id,
+                        'name': user.organization_user.name,
+                        'logo': user.organization_user.logo,
+                        'address': user.organization_user.address,
+                        'unique_domain': user.organization_user.unique_domain,
+                        'lat_lang': user.organization_user.lat_lang
                     }
                 }))
                 self.redirect("/")
@@ -87,7 +87,7 @@ class OrganizationCreationHandler(base.BaseHandler):
             'latittude_long': lat_lang,
         }))
 
-        self.redirect('/')
+        self.redirect('/organization/createAdmin')
 
 
 
@@ -141,16 +141,17 @@ class CreateAdminHandler(base.BaseHandler):
 
             usr = models.User(
                 name=admin_name,
-                last_name = admin_last_name,
-                email = admin_email,
-                password = admin_password,
-                username = admin_user,
+                last_name=admin_last_name,
+                email=admin_email,
+                password=admin_password,
+                username=admin_user,
                 avatar=admin_avatar,
                 organization_user=org
             )
 
             session.add(usr)
             session.commit()
+            self.redirect('/')
         except ValueError:
             return self.render("auth/org_create.html",
                                errors="There was an error when trying to create this organization, please try again in a moment")
@@ -162,8 +163,8 @@ class ValidateSubdomain(base.BaseHandler):
         org_subdomain = self.get_argument('org_subdomain', None)
         if org_subdomain != None:
             session = self.get_session()
-            count = session.query(web_core.models.Organization)\
-                .filter(web_core.models.Organization.unique_domain == org_subdomain)\
+            count = session.query(core.models.Organization)\
+                .filter(core.models.Organization.unique_domain == org_subdomain)\
                 .count()
             if count == 0:
                 self.set_status(200)

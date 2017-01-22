@@ -12,6 +12,7 @@ def getRoutes():
         (r"^/organization/validate_subdomain$", auth.ValidateSubdomain),
         (r"^/datasource/create$", datasources.CreateDatasource),
         (r"^/datasource/update$", datasources.UpdateDatasource),
+        (r"^/datasource/test$", datasources.TestDatasource),
         (r"^(.+)$", home.NotFoundHandler),
     ]
 

@@ -1,7 +1,7 @@
 import tornado.web
 import tornado.httpserver
 import tornado.ioloop
-from web_core import routes, options
+from core import routes, options
 
 
 class Application(tornado.web.Application):

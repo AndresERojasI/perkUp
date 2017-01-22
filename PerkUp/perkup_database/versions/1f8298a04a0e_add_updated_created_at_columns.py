@@ -18,7 +18,7 @@ depends_on = None
 
 def upgrade():
     op.add_column('organization', sa.Column('created_at', sa.DateTime()))
-    op.add_column('organization', sa.Column('update_at', sa.DateTime()))
+    op.add_column('organization', sa.Column('updated_at', sa.DateTime()))
     op.add_column('datasource', sa.Column('created_at', sa.DateTime()))
     op.add_column('datasource', sa.Column('updated_at', sa.DateTime()))
     op.add_column('user', sa.Column('created_at', sa.DateTime()))

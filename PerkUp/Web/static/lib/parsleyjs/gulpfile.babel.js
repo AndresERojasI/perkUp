@@ -184,7 +184,7 @@ function _mocha() {
 }
 
 function _registerBabel() {
-  require('babel-web_core/register');
+  require('babel-core/register');
 }
 
 function test() {

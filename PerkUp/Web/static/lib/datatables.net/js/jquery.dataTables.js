@@ -1342,7 +1342,7 @@
 	 * It is useful to have variables which are scoped locally so only the
 	 * DataTables functions can access them and they don't leak into global space.
 	 * At the same time these functions are often useful over multiple files in the
-	 * web_core and API, so we list, or at least document, all variables which are used
+	 * core and API, so we list, or at least document, all variables which are used
 	 * by DataTables as private variables here. This also ensures that there is no
 	 * clashing of variable names and that they can easily referenced for reuse.
 	 */
@@ -9160,7 +9160,7 @@
 	
 	/**
 	 * Convert from camel case parameters to Hungarian notation. This is made public
-	 * for the extensions to provide the same ability as DataTables web_core to accept
+	 * for the extensions to provide the same ability as DataTables core to accept
 	 * either the 1.9 style Hungarian notation, or the 1.10+ style camelCase
 	 * parameters.
 	 *
@@ -13823,7 +13823,7 @@
 		/**
 		 * Buttons. For use with the Buttons extension for DataTables. This is
 		 * defined here so other extensions can define buttons regardless of load
-		 * order. It is _not_ used by DataTables web_core.
+		 * order. It is _not_ used by DataTables core.
 		 *
 		 *  @type object
 		 *  @default {}

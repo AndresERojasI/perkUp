@@ -4160,7 +4160,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        funcProto = Function.prototype,
 	        objectProto = Object.prototype;
 
-	    /** Used to detect overreaching web_core-js shims. */
+	    /** Used to detect overreaching core-js shims. */
 	    var coreJsData = context['__core-js_shared__'];
 
 	    /** Used to resolve the decompiled source of functions. */
@@ -14631,12 +14631,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	     * Checks if `value` is a pristine native function.
 	     *
 	     * **Note:** This method can't reliably detect native functions in the presence
-	     * of the web_core-js package because web_core-js circumvents this kind of detection.
-	     * Despite multiple requests, the web_core-js maintainer has made it clear: any
+	     * of the core-js package because core-js circumvents this kind of detection.
+	     * Despite multiple requests, the core-js maintainer has made it clear: any
 	     * attempt to fix the detection will be obstructed. As a result, we're left
 	     * with little choice but to throw an error. Unfortunately, this also affects
 	     * packages, like [babel-polyfill](https://www.npmjs.com/package/babel-polyfill),
-	     * which rely on web_core-js.
+	     * which rely on core-js.
 	     *
 	     * @static
 	     * @memberOf _
@@ -62968,7 +62968,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    // export proto methods to core.%CONSTRUCTOR%.methods.%NAME%
 	    if(IS_PROTO){
 	      (exports.virtual || (exports.virtual = {}))[key] = out;
-	      // export proto methods to web_core.%CONSTRUCTOR%.prototype.%NAME%
+	      // export proto methods to core.%CONSTRUCTOR%.prototype.%NAME%
 	      if(type & $export.R && expProto && !expProto[key])hide(expProto, key, out);
 	    }
 	  }

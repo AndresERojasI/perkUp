@@ -4,7 +4,7 @@ Defines the base controller that all of the bootstrap controllers inherit from
 
 from sqlalchemy.orm import sessionmaker
 import tornado.web
-from web_core import models
+from core import models
 import simplejson as json
 
 

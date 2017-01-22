@@ -1,14 +1,17 @@
 from . import base
 import tornado.web
-from web_core import models
-import web_core.SSH.ssh_maker as SSH
-import os
+from core import models
+import core.SSH.ssh_maker as SSH
+import os, sys
 import tornado.escape
 from sshtunnel import SSHTunnelForwarder
 from sqlalchemy import create_engine
+from sqlalchemy import update
+import pprint
+import pickle
 
-
-__UPLOADS__ = "static/ssh_keys/"
+__SSH_PATH__ = "static/ssh_keys/"
+__TABLES_PATH__ = "databases/"
 
 class CreateDatasource(base.BaseHandler):
     @tornado.web.authenticated
@@ -80,53 +83,21 @@ class UpdateDatasource(base.BaseHandler):
         if ds_id == None:
             return self.render(
                 "datasources/update.html",
-                errors="Please pass an Datasource ID",
-                user=self.get_current_user(),
+                errors="Please pass a Datasource ID",
+                user=user,
                 datasource=False
             )
 
         session = self.get_session()
         datasource = session.query(models.Datasource) \
-            .filter(models.Datasource.id == ds_id) \
+            .filter(models.Datasource.id == ds_id and models.Datasource.organization_id == organization_data['id']) \
             .one_or_none()
-
-        connection_test = None
-        try:
-            file_path = "{}{}/{}/".format(__UPLOADS__, organization_data['id'], datasource.name)
-
-            server = SSHTunnelForwarder(
-                (datasource.ssh_server, int(datasource.ssh_port)),
-                ssh_username=datasource.ssh_user,
-                ssh_pkey=file_path+'private.key',
-                ssh_private_key_password=datasource.ssh_key_pass_phrase,
-                remote_bind_address=(datasource.host, int(datasource.port))
-            )
-
-            server.start()
-
-            db_url = 'mysql+mysqldb://{}:{}@{}:{}/{}'.format(datasource.user, datasource.password, datasource.host, server.local_bind_port, datasource.schema)
-            engine = create_engine(db_url, pool_recycle=360)
-            with engine.connect() as con:
-
-                rs = con.execute('SHOW TABLES')
-
-                for row in rs:
-                    print row
-
-                con.close()
-            server.stop()
-        except Exception, e:
-            print "Error: -------------"
-            print str(e)
-            print "-------------"
-            connection_test = None
-
 
         if datasource == None:
             return self.render(
                 "datasources/update.html",
-                errors="There are no Datasources with that ID",
-                user=self.get_current_user(),
+                errors="No Datasource with that ID in this organization",
+                user=user,
                 datasource=False
             )
 
@@ -136,3 +107,88 @@ class UpdateDatasource(base.BaseHandler):
             user=user,
             datasource=datasource
         )
+
+    def post(self):
+        ds_type = self.get_argument('ds_type', None)
+        ds_host = self.get_argument('ds_host', None)
+        ds_port = self.get_argument('ds_port', None)
+        ds_schema = self.get_argument('ds_schema', None)
+        ds_user = self.get_argument('ds_user', None)
+        ds_password = self.get_argument('ds_password', None)
+        ssh_server = self.get_argument('ssh_server', None)
+        ssh_port = self.get_argument('ssh_port', None)
+        ssh_user = self.get_argument('ssh_user', None)
+        ssh_pass = self.get_argument('ssh_pass', None)
+        ds_id = self.get_argument('ds_id', None)
+        user = self.get_current_user()
+
+        if ds_id == None:
+            return self.render(
+                "datasources/update.html",
+                errors="Please pass a Datasource ID",
+                user=user,
+                datasource=False
+            )
+
+        session = self.get_session()
+        organization_data = user['organization']
+        try:
+            datasource = session.query(models.Datasource)\
+                .filter(models.Datasource.id == ds_id, models.Datasource.organization_id == organization_data['id'])\
+                .first()
+
+
+            datasource.host = ds_host
+            datasource.port = ds_port
+            datasource.user = ds_user
+            datasource.schema = ds_schema
+            datasource.password = ds_password
+            datasource.type = ds_type
+            datasource.ssh_server = ssh_server
+            datasource.ssh_port = ssh_port
+            datasource.ssh_user = ssh_user
+            datasource.ssh_password = ssh_pass
+
+            session.add(datasource)
+            session.commit()
+
+        except ValueError:
+            return self.render(
+                "datasources/update.html",
+                errors="Please pass a Datasource ID",
+                user=user,
+                datasource=False
+            )
+
+        url = '/datasource/update?ds_id={}'.format(organization_data['id'])
+        self.redirect(url)
+
+class TestDatasource(base.BaseHandler):
+    def get(self):
+        user = self.get_current_user()
+        organization_data = user['organization']
+        db_path = __TABLES_PATH__ + str(organization_data['id']) + '/tables/employees.table'
+        table = pickle.load(open(db_path, "rb"))
+        ds_id = self.get_argument('ds_id', None)
+        session = self.get_session()
+        datasource = session.query(models.Datasource) \
+            .filter(models.Datasource.id == ds_id) \
+            .one_or_none()
+        file_path = "{}{}/{}/".format(__SSH_PATH__, organization_data['id'], datasource.name)
+        server = SSHTunnelForwarder(
+            (datasource.ssh_server, int(datasource.ssh_port)),
+            ssh_username=datasource.ssh_user,
+            ssh_pkey=file_path + 'private.key',
+            ssh_private_key_password=datasource.ssh_key_pass_phrase,
+            remote_bind_address=(datasource.host, int(datasource.port))
+        )
+
+        server.start()
+
+        db_url = 'mysql+mysqldb://{}:{}@{}:{}/{}'.format(datasource.user, datasource.password, datasource.host,
+                                                         server.local_bind_port, datasource.schema)
+        engine = create_engine(db_url, pool_recycle=360)
+        with engine.connect() as con:
+            result = con.execute(table.count())
+            for row in result:
+                pprint.pprint(row)

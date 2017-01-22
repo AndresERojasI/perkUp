@@ -83,7 +83,7 @@ var jQuery = function( selector, context ) {
   // The ready event handler
   DOMContentLoaded,
 
-  // Save a reference to some web_core methods
+  // Save a reference to some core methods
   toString = Object.prototype.toString,
   hasOwn = Object.prototype.hasOwnProperty,
   push = Array.prototype.push,
@@ -486,7 +486,7 @@ jQuery.extend({
     }
   },
 
-  // See test/unit/web_core.js for details concerning isFunction.
+  // See test/unit/core.js for details concerning isFunction.
   // Since version 1.3, DOM methods and functions like alert
   // aren't supported. They return false on IE (#2968).
   isFunction: function( obj ) {
