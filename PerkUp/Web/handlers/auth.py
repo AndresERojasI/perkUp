@@ -4,8 +4,6 @@ import core
 import os, uuid
 import simplejson as json
 from core import models
-import pprint
-from sqlalchemy import inspect
 
 session_opts = {
     'session.cookie_expires': True
@@ -27,7 +25,7 @@ class AuthHandler(base.BaseHandler):
                 .filter(core.models.User.username == username, core.models.User.password == password) \
                 .first()
 
-            if user == None:
+            if user is None:
                 return self.render("auth/login.html", errors="Login failed, please check your credentials andd try again")
             else:
                 self.set_secure_cookie('user', json.dumps({
@@ -49,28 +47,28 @@ class AuthHandler(base.BaseHandler):
         except ValueError:
             return self.render("auth/login.html", errors="Login failed, there was an unexpected error, please try again in a moment")
 
+
 class OrganizationCreationHandler(base.BaseHandler):
     def get(self):
         self.clear_cookie('company_data')
         return self.render("auth/org_create.html", errors=False)
 
     def post(self):
-        #validates the basic required fields
+        # Validates the basic required fields
         organization_name = self.get_argument('org_name', None)
         org_subdomain = self.get_argument('org_subdomain', None)
         org_logo = self.request.files['org_logo']
         org_address = self.get_argument('org_address', None)
         lat_lang = self.get_argument('lat_lang', None)
 
-        if lat_lang != None:
+        if lat_lang is not None:
             lat_lang = lat_lang.split('|')
 
-        #self.finish(json.dumps(lat_lang))
-        if organization_name == None or org_subdomain == None:
+        if organization_name is None or org_subdomain is None:
             return self.render("auth/org_create.html",
                                errors="There are errors in this fom please check them and try again")
 
-        if org_logo != None:
+        if org_logo is not None:
             fileinfo = org_logo[0]
             fname = fileinfo['filename']
             extn = os.path.splitext(fname)[1]
@@ -90,13 +88,12 @@ class OrganizationCreationHandler(base.BaseHandler):
         self.redirect('/organization/createAdmin')
 
 
-
 class CreateAdminHandler(base.BaseHandler):
     def get(self):
         return self.render("auth/admin_create.html", errors=False)
 
     def post(self):
-        #create an organization and assign the user as an administrator
+        # Create an organization and assign the user as an administrator
         org_data = self.get_secure_cookie('company_data')
 
         if not org_data:
@@ -112,7 +109,7 @@ class CreateAdminHandler(base.BaseHandler):
                                errors="The email and the confirmation does not match, please fix it.")
 
         admin_avatar = self.request.files['admin_avatar']
-        if admin_avatar != None:
+        if admin_avatar is not None:
             fileinfo = admin_avatar[0]
             fname = fileinfo['filename']
             extn = os.path.splitext(fname)[1]
@@ -127,7 +124,7 @@ class CreateAdminHandler(base.BaseHandler):
         admin_password = self.get_argument('admin_password', None)
 
         try:
-            #we have gathered all the data needed, so now we create everything.
+            # We have gathered all the data needed, so now we create everything.
             org = models.Organization(
                 name=org_data['org_name'],
                 address=org_data['org_address'],
@@ -154,14 +151,14 @@ class CreateAdminHandler(base.BaseHandler):
             self.redirect('/')
         except ValueError:
             return self.render("auth/org_create.html",
-                               errors="There was an error when trying to create this organization, please try again in a moment")
-
+                               errors="There was an error when trying to create this organization, please try again in "
+                                      "a moment")
 
 
 class ValidateSubdomain(base.BaseHandler):
     def get(self):
         org_subdomain = self.get_argument('org_subdomain', None)
-        if org_subdomain != None:
+        if org_subdomain is not None:
             session = self.get_session()
             count = session.query(core.models.Organization)\
                 .filter(core.models.Organization.unique_domain == org_subdomain)\

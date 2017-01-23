@@ -6,19 +6,24 @@ import os, sys
 import tornado.escape
 from sshtunnel import SSHTunnelForwarder
 from sqlalchemy import create_engine
-from sqlalchemy import update
 import pprint
 import pickle
 
 __SSH_PATH__ = "static/ssh_keys/"
 __TABLES_PATH__ = "databases/"
 
+
 class CreateDatasource(base.BaseHandler):
+    """
+    This class handles the creation of the Data Sources
+    """
+
     @tornado.web.authenticated
     def get(self):
         return self.render("datasources/create.html", errors=False, user=self.get_current_user())
 
     def post(self):
+        # Get all the required arguments from the POST parameters
         ds_name = self.get_argument('ds_custom_name', None)
         ds_type = self.get_argument('ds_type', None)
         ds_host = self.get_argument('ds_host', None)
@@ -31,22 +36,27 @@ class CreateDatasource(base.BaseHandler):
         ssh_user = self.get_argument('ssh_user', None)
         ssh_pass = self.get_argument('ssh_pass', None)
 
+        # Get the user information from the secure cookie
         user = self.get_current_user()
-        if ds_name == None or ds_type == None or ds_host == None or ds_port == None:
+
+        # Validate the minimum required fields
+        if ds_name is None or ds_type is None or ds_host is None or ds_port is None:
             return self.render("datasources/create.html",
                                errors="There are errors in this form please check them and try again", user=user)
 
+        # Obtain the Organization data from the cookie and look it up in the database, just to confirm
         organization_data = user['organization']
         session = self.get_session()
         organization = session.query(models.Organization) \
             .filter(models.Organization.id == organization_data['id']) \
             .first()
 
+        # Generate the unique passphrase and create the public/private key pair
         ssh_key_pass_phrase = os.urandom(64)
+        ssh_builder = SSH.SSHCreator()
+        ssh_key_pub = ssh_builder.createKey(organization_data['id'], ssh_key_pass_phrase, ds_name)
 
-        sshBuilder = SSH.SSHCreator()
-        ssh_key_pub = sshBuilder.createKey(organization_data['id'],ssh_key_pass_phrase, ds_name)
-
+        # Create the datasource or redirect with error
         datasource = models.Datasource(
             host=ds_host,
             port=ds_port,
@@ -70,15 +80,24 @@ class CreateDatasource(base.BaseHandler):
             url = '/datasource/update?ds_id={}'.format(datasource.id)
             self.redirect(url)
         except ValueError:
-            return self.render("datasources/create.html",
-                               errors="There was an error when trying to create this Datasource, please try again in a moment", user=user)
+            return self.render(
+                "datasources/create.html",
+                errors="There was an error when trying to create this Datasource, please try again in a moment",
+                user=user
+                )
 
 
 class UpdateDatasource(base.BaseHandler):
+    """
+    This class handles the update of a datasource
+    """
     @tornado.web.authenticated
     def get(self):
+        # Get all the required arguments from the GET parameters
         ds_id = self.get_argument('ds_id', None)
-        user=self.get_current_user()
+
+        # Get the user information from the secure cookie
+        user = self.get_current_user()
         organization_data = user['organization']
         if ds_id == None:
             return self.render(
@@ -93,7 +112,8 @@ class UpdateDatasource(base.BaseHandler):
             .filter(models.Datasource.id == ds_id and models.Datasource.organization_id == organization_data['id']) \
             .one_or_none()
 
-        if datasource == None:
+        # Validate if a datasource id was passed
+        if datasource is None:
             return self.render(
                 "datasources/update.html",
                 errors="No Datasource with that ID in this organization",
@@ -109,6 +129,7 @@ class UpdateDatasource(base.BaseHandler):
         )
 
     def post(self):
+        # Get all the required arguments from the POST parameters
         ds_type = self.get_argument('ds_type', None)
         ds_host = self.get_argument('ds_host', None)
         ds_port = self.get_argument('ds_port', None)
@@ -120,9 +141,10 @@ class UpdateDatasource(base.BaseHandler):
         ssh_user = self.get_argument('ssh_user', None)
         ssh_pass = self.get_argument('ssh_pass', None)
         ds_id = self.get_argument('ds_id', None)
-        user = self.get_current_user()
 
-        if ds_id == None:
+        # Get the user information from the secure cookie
+        user = self.get_current_user()
+        if ds_id is None:
             return self.render(
                 "datasources/update.html",
                 errors="Please pass a Datasource ID",
@@ -130,13 +152,13 @@ class UpdateDatasource(base.BaseHandler):
                 datasource=False
             )
 
-        session = self.get_session()
+        # Obtain the Organization data from the cookie and look it up in the database, just to confirm
         organization_data = user['organization']
         try:
-            datasource = session.query(models.Datasource)\
-                .filter(models.Datasource.id == ds_id, models.Datasource.organization_id == organization_data['id'])\
+            session = self.get_session()
+            datasource = session.query(models.Datasource) \
+                .filter(models.Datasource.id == ds_id, models.Datasource.organization_id == organization_data['id']) \
                 .first()
-
 
             datasource.host = ds_host
             datasource.port = ds_port

@@ -1,6 +1,7 @@
 from handlers import home, auth, datasources
 
-def getRoutes():
+
+def get_routes():
 
     app_routes = [
         # Format: (<path>, <handler>, [dict(<request handler kwargs>)])

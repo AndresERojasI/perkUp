@@ -4,20 +4,25 @@ from sqlalchemy.ext.automap import automap_base
 from core import models, SSH
 
 __TABLES_PATH__ = "databases/"
-class MapDatabase():
-    def startMapping(self, organization_data):
 
-        secureConnection = SSH.SSHConnection()
 
-        with secureConnection.secureDBConnection() as conn:
+class MapDatabase:
+
+    def __init__(self):
+        pass
+
+    def start_mapping(self, organization_data):
+
+        secure_connection = SSH.SSHConnection()
+
+        with secure_connection.secureDBConnection() as conn:
             Base = automap_base()
             Base.prepare(conn, reflect=True)
 
             for table in Base.metadata.tables.items():
                 db_path = __TABLES_PATH__ + str(organization_data['id']) + '/tables/'
 
-                print "Path:", db_path
-                if os.path.exists(db_path) != True:
+                if os.path.exists(db_path) is False:
                     os.makedirs(db_path, 0o777)
 
                 with open(db_path + str(table[0]) + ".table", 'wb') as content_file:
@@ -25,4 +30,4 @@ class MapDatabase():
 
             conn.close()
 
-        secureConnection.closeConnection()
+        secure_connection.closeConnection()

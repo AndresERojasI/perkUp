@@ -25,6 +25,9 @@ class BaseModel:
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now())
 
+    def __init__(self):
+        pass
+
 
 class Organization(BaseModel, Base):
     """"""
@@ -64,13 +67,16 @@ class Datasource(BaseModel, Base):
     ssh_key_pub = Column(Text)
     ssh_key_pass_phrase = Column(String(200))
 
-    #Foreign keys
+    # Foreign keys
     organization_id = Column(Integer, ForeignKey('organization.id'))
     organization_datasource = relationship(
         Organization,
-        backref=backref('organization_datasource',
-                         uselist=True,
-                         cascade='delete,all'))
+        backref=backref(
+            'organization_datasource',
+            uselist=True,
+            cascade='delete,all'
+        )
+    )
 
 
 class User(BaseModel, Base):
@@ -85,10 +91,13 @@ class User(BaseModel, Base):
     username = Column(String(50))
     avatar = Column(String(100))
 
-    #Foreign keys#
+    # Foreign keys
     organization_id = Column(Integer, ForeignKey('organization.id'))
     organization_user = relationship(
         Organization,
-        backref=backref('organization_user',
-                         uselist=True,
-                         cascade='delete,all'))
+        backref=backref(
+            'organization_user',
+            uselist=True,
+            cascade='delete,all'
+        )
+    )

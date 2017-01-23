@@ -7,7 +7,7 @@ __UPLOADS__ = "static/ssh_keys/"
 class SSHCreator():
     def createKey(self, orgId, passPhrase, ds_name ):
 
-        file_path =  "{}{}/{}/".format(__UPLOADS__, orgId, ds_name)
+        file_path = "{}{}/{}/".format(__UPLOADS__, orgId, ds_name)
         if os.path.exists(file_path) != True:
             os.makedirs(file_path, 0o777)
 
