@@ -8,26 +8,23 @@ __TABLES_PATH__ = "databases/"
 
 class MapDatabase:
 
-    def __init__(self):
-        pass
-
-    def start_mapping(self, organization_data):
+    def start_mapping(self, datasource, org_id):
 
         secure_connection = SSH.SSHConnection()
+        tables = []
 
-        with secure_connection.secureDBConnection() as conn:
+        with secure_connection.secureDBConnection(datasource, org_id) as conn:
             Base = automap_base()
             Base.prepare(conn, reflect=True)
 
             for table in Base.metadata.tables.items():
-                db_path = __TABLES_PATH__ + str(organization_data['id']) + '/tables/'
-
-                if os.path.exists(db_path) is False:
-                    os.makedirs(db_path, 0o777)
-
-                with open(db_path + str(table[0]) + ".table", 'wb') as content_file:
-                    content_file.write(pickle.dumps(table[1]))
+                tables.append({
+                    'table_name': table[0],
+                    'serialized_table': pickle.dumps(table[1])
+                })
 
             conn.close()
 
         secure_connection.closeConnection()
+
+        return tables

@@ -1,11 +1,15 @@
 from . import base
 import tornado
-import simplejson as json
+from core import models
 
 class HomeHandler(base.BaseHandler):
     @tornado.web.authenticated
     def get(self):
-        return self.render("index.html", user = self.get_current_user())
+        user = self.get_current_user()
+        session = self.get_session()
+        datasources = session.query(models.Datasource) \
+            .all()
+        return self.render("index.html", user=user, datasources=datasources)
 
 class NotFoundHandler(base.BaseHandler):
     """

@@ -14,11 +14,11 @@ class BaseHandler(tornado.web.RequestHandler):
     def get_current_user(self):
         user = self.get_secure_cookie('user')
 
-        return json.loads(user) if user != None else None
+        return json.loads(user) if user is not None else None
 
     def get_session(self):
         if self.db_session is None:
-            DBSession = sessionmaker(bind=models.engine)
-            self.db_session = DBSession()
+            session = sessionmaker(bind=models.engine)
+            self.db_session = session()
 
         return self.db_session

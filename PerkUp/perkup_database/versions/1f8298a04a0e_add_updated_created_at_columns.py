@@ -26,4 +26,9 @@ def upgrade():
 
 
 def downgrade():
-    pass
+    op.drop_column('organization', 'created_at')
+    op.drop_column('organization', 'updated_at')
+    op.drop_column('datasource', 'created_at')
+    op.drop_column('datasource', 'updated_at')
+    op.drop_column('user', 'created_at')
+    op.drop_column('user', 'updated_at')

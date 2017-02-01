@@ -4,8 +4,13 @@ import os
 
 __UPLOADS__ = "static/ssh_keys/"
 
-class SSHCreator():
-    def createKey(self, orgId, passPhrase, ds_name ):
+
+class SSHCreator:
+
+    def __init__(self):
+        pass
+
+    def create_key(self, orgId, ds_name):
 
         file_path = "{}{}/{}/".format(__UPLOADS__, orgId, ds_name)
         if os.path.exists(file_path) != True:

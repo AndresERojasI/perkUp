@@ -26,35 +26,42 @@
         <div class="x_title">
           <h2>Datasources</h2>
           <ul class="nav navbar-right panel_toolbox">
-            <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
+            <li>
+                <a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
             </li>
+              <li><a href="/datasource/create" class="create-ds"><i class="fa fa-plus"></i> create</a>
           </ul>
           <div class="clearfix"></div>
         </div>
         <div class="x_content scrollbar" data-mcs-theme="dark">
             <ul class="list-unstyled scroll-view">
-              <li class="media event">
-                <a class="pull-left border-green profile_thumb">
-                  <i class="fa fa-database green"></i>
-                </a>
-                <div class="media-body">
-                  <a class="title" href="#">Ms. Mary Jane</a>
-                  <p><strong>$2300. </strong> Agent Avarage Sales </p>
-                  <p> <small>12 Sales Today</small>
-                  </p>
-                </div>
-              </li>
-              <li class="media event">
-                <a class="pull-left border-blue profile_thumb">
-                  <i class="fa fa-database blue"></i>
-                </a>
-                <div class="media-body">
-                  <a class="title" href="#">Ms. Mary Jane</a>
-                  <p><strong>$2300. </strong> Agent Avarage Sales </p>
-                  <p> <small>12 Sales Today</small>
-                  </p>
-                </div>
-              </li>
+                {% for datasource in datasources %}
+                  <li class="media event">
+                    <div class="col-lg-6 col-md-6 col-sm-12 col-xs-12">
+                        <a class="pull-left border-green profile_thumb">
+                          <i class="fa fa-database green"></i>
+                        </a>
+                        <div class="media-body">
+                          <a class="title" href="#">{{datasource.name}}</a>
+                          <p>{{datasource.type}}</p>
+                          <p style="font-size: 20px;">
+                              <a href="/datasource/update?ds_id={{datasource.id}}">
+                              <i class="fa fa-pencil-square text-success" aria-hidden="true"></i>
+                            </a>
+                            <a class="delete_datasource" href="/datasource/delete?ds_id={{datasource.id}}">
+                              <i class="fa fa-minus-circle text-danger" aria-hidden="true"></i>
+                            </a>
+                          </p>
+                        </div>
+                    </div>
+                      <div class="col-lg-6 col-md-6 col-sm-12 col-xs-12">
+                          <p>
+                              <small><strong>Last update:</strong> {{datasource.updated_at}}</small>
+                          </p>
+
+                      </div>
+                  </li>
+                {% end %}
             </ul>
         </div>
     </div>

@@ -25,9 +25,6 @@ class BaseModel:
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now())
 
-    def __init__(self):
-        pass
-
 
 class Organization(BaseModel, Base):
     """"""
@@ -73,6 +70,24 @@ class Datasource(BaseModel, Base):
         Organization,
         backref=backref(
             'organization_datasource',
+            uselist=True,
+            cascade='delete,all'
+        )
+    )
+
+class DatasourceTable(BaseModel, Base):
+    """"""
+    __tablename__ = 'datasource_table'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    table_name = Column(Text)
+    table_structure = Column(Text)
+    serialized_table = Column(Text)
+    # Foreign key
+    datasource_id = Column(Integer, ForeignKey('datasource.id'))
+    datasource_table = relationship(
+        Datasource,
+        backref=backref(
+            'datasource_table',
             uselist=True,
             cascade='delete,all'
         )

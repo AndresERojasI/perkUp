@@ -63,9 +63,7 @@
         <div>
             <input name="ds_password" {% if datasource != False %}value="{{datasource.password}}"{% end %} data-parsley-trigger="focusout" data-parsley-maxlength="200" type="password" class="form-control" placeholder="Password" data-parsley-required="true"/>
         </div>
-    </div>
 
-    <div class="col-xs-12 col-sm-6 col-md-6 col-lg-12">
         <h2>SSH Information</h2>
         <div>
             <input name="ssh_server" {% if datasource != False %}value="{{datasource.ssh_server}}"{% end %} data-parsley-trigger="focusout" data-parsley-maxlength="200" type="text" class="form-control" placeholder="SSH Server" data-parsley-required="true"/>
@@ -83,16 +81,16 @@
             <input name="ssh_pass" {% if datasource != False %}value="{{datasource.ssh_password}}"{% end %} data-parsley-trigger="focusout" data-parsley-maxlength="200" type="text" class="form-control" placeholder="User" data-parsley-required="true"/>
         </div>
 
-        <!--<div>
-            <input name="ssh_pass_phrase" readonly {% if datasource != False %}value="{{ datasource.ssh_key_pass_phrase }}"{% end %} data-parsley-trigger="focusout" data-parsley-maxlength="200" type="text" class="form-control" placeholder="User" data-parsley-required="true"/>
-        </div>-->
-
         <div>
             <label for="ssh_key_pub">SSH Public Key</label>
             <textarea readonly name="ssh_key_pub"   id="ssh_key_pub" class="col-xs-12 col-sm-12 col-md-12 col-lg-12" cols="50" rows="5">
                 {% if datasource != False %}{{datasource.ssh_key_pub}}{% end %}
             </textarea>
         </div>
+    </div>
+
+    <div class="col-xs-12 col-sm-6 col-md-6 col-lg-12">
+        <h2>Table Structure</h2>
 
     </div>
     <div class="clearfix"></div>

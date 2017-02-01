@@ -11,8 +11,10 @@ def get_routes():
         (r"^/organization/create$", auth.OrganizationCreationHandler),
         (r"^/organization/createAdmin$", auth.CreateAdminHandler),
         (r"^/organization/validate_subdomain$", auth.ValidateSubdomain),
+        (r"^/datasource/list$", datasources.ListDatasources),
         (r"^/datasource/create$", datasources.CreateDatasource),
         (r"^/datasource/update$", datasources.UpdateDatasource),
+        (r"^/datasource/delete$", datasources.DeleteDatasource),
         (r"^/datasource/test$", datasources.TestDatasource),
         (r"^(.+)$", home.NotFoundHandler),
     ]

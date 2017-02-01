@@ -6,8 +6,10 @@ import os, sys
 import tornado.escape
 from sshtunnel import SSHTunnelForwarder
 from sqlalchemy import create_engine
+import datetime
 import pprint
 import pickle
+
 
 __SSH_PATH__ = "static/ssh_keys/"
 __TABLES_PATH__ = "databases/"
@@ -52,9 +54,8 @@ class CreateDatasource(base.BaseHandler):
             .first()
 
         # Generate the unique passphrase and create the public/private key pair
-        ssh_key_pass_phrase = os.urandom(64)
         ssh_builder = SSH.SSHCreator()
-        ssh_key_pub = ssh_builder.createKey(organization_data['id'], ssh_key_pass_phrase, ds_name)
+        ssh_key_pub = ssh_builder.create_key(organization_data['id'], ds_name)
 
         # Create the datasource or redirect with error
         datasource = models.Datasource(
@@ -70,21 +71,22 @@ class CreateDatasource(base.BaseHandler):
             ssh_user=ssh_user,
             ssh_password=ssh_pass,
             ssh_key_pub=ssh_key_pub,
-            ssh_key_pass_phrase=ssh_key_pass_phrase,
+            ssh_key_pass_phrase='',
             organization_datasource=organization
         )
 
         try:
             session.add(datasource)
             session.commit()
-            url = '/datasource/update?ds_id={}'.format(datasource.id)
-            self.redirect(url)
         except ValueError:
             return self.render(
                 "datasources/create.html",
                 errors="There was an error when trying to create this Datasource, please try again in a moment",
                 user=user
                 )
+
+        url = '/datasource/update?ds_id={}'.format(datasource.id)
+        self.redirect(url)
 
 
 class UpdateDatasource(base.BaseHandler):
@@ -112,6 +114,8 @@ class UpdateDatasource(base.BaseHandler):
             .filter(models.Datasource.id == ds_id and models.Datasource.organization_id == organization_data['id']) \
             .one_or_none()
 
+
+
         # Validate if a datasource id was passed
         if datasource is None:
             return self.render(
@@ -121,6 +125,7 @@ class UpdateDatasource(base.BaseHandler):
                 datasource=False
             )
 
+        pprint.pprint(datasource)
         return self.render(
             "datasources/update.html",
             errors=False,
@@ -154,6 +159,8 @@ class UpdateDatasource(base.BaseHandler):
 
         # Obtain the Organization data from the cookie and look it up in the database, just to confirm
         organization_data = user['organization']
+
+        # Update or fail with error
         try:
             session = self.get_session()
             datasource = session.query(models.Datasource) \
@@ -170,6 +177,7 @@ class UpdateDatasource(base.BaseHandler):
             datasource.ssh_port = ssh_port
             datasource.ssh_user = ssh_user
             datasource.ssh_password = ssh_pass
+            datasource.updated_at = datetime.datetime.now()
 
             session.add(datasource)
             session.commit()
@@ -184,6 +192,45 @@ class UpdateDatasource(base.BaseHandler):
 
         url = '/datasource/update?ds_id={}'.format(organization_data['id'])
         self.redirect(url)
+
+
+class ListDatasources(base.BaseHandler):
+    def get(self):
+        user = self.get_current_user()
+        session = self.get_session()
+        datasources = session.query(models.Datasource) \
+            .all()
+
+        return self.render(
+            "datasources/list.html",
+            user=user,
+            datasources=datasources
+        )
+
+
+class DeleteDatasource(base.BaseHandler):
+    def get(self):
+        ds_id = self.get_argument('ds_id', None)
+
+        if ds_id is None:
+            self.redirect('/datasource/list')
+
+        # Obtain the Organization data from the cookie and look it up in the database, just to confirm
+        user = self.get_current_user()
+        organization_data = user['organization']
+
+        session = self.get_session()
+        datasource = session.query(models.Datasource) \
+            .filter(models.Datasource.id == ds_id, models.Datasource.organization_id == organization_data['id']) \
+            .first()
+
+        if datasource is None:
+            self.redirect('/datasource/list')
+
+        session.delete(datasource)
+        session.commit()
+        self.redirect('/datasource/list')
+
 
 class TestDatasource(base.BaseHandler):
     def get(self):
